@@ -1,0 +1,11 @@
+__pycache__
+uploads
+.env
+logs
+sample.pdf
+cv_tasnim_chiba.pdf
+testing.py
+test.py
+.idea
+venv
+main.run.xml
