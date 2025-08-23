@@ -49,6 +49,11 @@ export default function Resumes() {
       });
   }, [data?.data, searchQuery, sortOrder]);
 
+  useEffect(() => {
+    console.log("🎯 Environment:", process.env.NODE_ENV);
+    console.log("🎯 API URL:", process.env.NEXT_PUBLIC_API_URL);
+  }, []);
+
   const handleCreateClick = () => setDialogOpen(true);
 
   const renderContent = () => {
