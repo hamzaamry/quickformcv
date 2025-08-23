@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { QuickFormLogo } from "@/components/icons/QuickFormLogo";
 
 export const Header = () => {
   return (
     <header className="relative z-50 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-6">
-          {/* Logo */}
-          <div className="flex items-center">
-            <span className="ml-3 text-xl font-bold text-gray-900">
-              QuickForm CV
-            </span>
-          </div>
+          <Link href="/" className="flex items-center cursor-pointer">
+            <QuickFormLogo className="h-10 w-auto" />
+          </Link>
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
             <Link

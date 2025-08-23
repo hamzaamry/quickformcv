@@ -89,7 +89,7 @@ export default function Resumes() {
             Build Your Resume With QuickForm CV
           </h1>
           <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            Create, edit, and manage your professional resumes
+            Let's build something that gets you hired
           </p>
         </motion.div>
 

@@ -1,5 +1,6 @@
 import { Mail, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import { QuickFormLogoWhite } from "@/components/icons/QuickFormLogoWhite";
 
 export const Footer = () => {
   return (
@@ -8,7 +9,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center">
-              <span className="text-xl font-bold text-white">QuickForm CV</span>
+              <QuickFormLogoWhite className="h-8 w-auto" />
             </div>
             <p className="mt-4 text-gray-400 max-w-md">
               The modern resume builder that helps job seekers create

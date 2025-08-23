@@ -11,7 +11,7 @@ import {
   Testimonials,
 } from "@/components/LandingPage";
 
-export default function ClaraHireLanding() {
+export default function QuickFormCVLanding() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
