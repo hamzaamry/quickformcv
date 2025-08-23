@@ -25,34 +25,32 @@ export function AuthProvider({ children }) {
   const { data: user, isLoading, isError } = useUser();
 
   useEffect(() => {
-    const knownRoutes = ["/", "/auth/login", "/auth/signup", "/resumes"];
-    const isDynamicRoute = pathname.startsWith("/builder/");
-
-    if (!knownRoutes.includes(pathname) && !isDynamicRoute) {
-      setIsInitialized(true);
-      return;
-    }
-
     const accessToken = authService.getAccessToken();
     const isPublic = isPublicRoute(pathname);
 
     if (!accessToken && !isPublic) {
       router.push("/auth/login");
-    } else if (
-      accessToken &&
-      (pathname === "/auth/login" || pathname === "/auth/signup")
-    ) {
+      setIsInitialized(true);
+      return;
+    }
+
+    if (accessToken && (pathname === "/auth/login" || pathname === "/auth/signup")) {
       router.push("/resumes");
+      setIsInitialized(true);
+      return;
     }
     setIsInitialized(true);
   }, [pathname, router]);
 
   if (!isInitialized) {
-    return null;
+    return (
+        <div className="flex h-screen items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+        </div>
+    );
   }
 
-  // Only show loading state for protected routes
-  if (isLoading && !isPublicRoute(pathname)) {
+  if (isLoading && !isPublicRoute(pathname) && authService.isAuthenticated()) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

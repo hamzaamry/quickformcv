@@ -22,17 +22,24 @@ export default function Resumes() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const accessToken = searchParams.get("access_token");
-    const refreshToken = searchParams.get("refresh_token");
+    const handleTokensFromURL = async () => {
+      const accessToken = searchParams.get("access_token");
+      const refreshToken = searchParams.get("refresh_token");
 
-    if (accessToken && refreshToken) {
-      authService.storeTokens(accessToken, refreshToken);
-      // Clean URL by removing query parameters without page reload
-      const url = new URL(window.location);
-      url.searchParams.delete("access_token");
-      url.searchParams.delete("refresh_token");
-      window.history.replaceState({}, document.title, url.toString());
-    }
+      if (accessToken && refreshToken) {
+        try {
+          await authService.storeTokens(accessToken, refreshToken);
+          // Clean URL by removing query parameters without page reload
+          const url = new URL(window.location);
+          url.searchParams.delete("access_token");
+          url.searchParams.delete("refresh_token");
+          window.history.replaceState({}, document.title, url.toString());
+        } catch (error) {
+          console.error("Failed to store tokens from URL:", error);
+        }
+      }
+    };
+    handleTokensFromURL();
   }, [searchParams]);
 
   const filteredAndSortedResumes = useMemo(() => {
@@ -48,11 +55,6 @@ export default function Resumes() {
           : new Date(a.updated_at) - new Date(b.updated_at);
       });
   }, [data?.data, searchQuery, sortOrder]);
-
-  useEffect(() => {
-    console.log("🎯 Environment:", process.env.NODE_ENV);
-    console.log("🎯 API URL:", process.env.NEXT_PUBLIC_API_URL);
-  }, []);
 
   const handleCreateClick = () => setDialogOpen(true);
 

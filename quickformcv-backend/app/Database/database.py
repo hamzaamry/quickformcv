@@ -11,7 +11,10 @@ from ..models import Base
 from ..utils.logging_config import logger
 from .constants import DatabaseConstants
 
-load_dotenv()
+if os.path.exists(".env.local"):
+    load_dotenv(".env.local")
+else:
+    load_dotenv()
 
 
 class DatabaseConfig:

@@ -1,64 +1,75 @@
 import axios from "axios";
 import { authService } from "./auth";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+    baseURL: API_BASE_URL,
+    headers: {
+        "Content-Type": "application/json",
+    },
 });
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
-    const token = authService.getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+        if (typeof window !== "undefined") {
+            const token = authService.getAccessToken();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
 
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      originalRequest.url !== "/auth/refresh"
-    ) {
-      originalRequest._retry = true;
+        // Don't try to refresh token for authentication endpoints
+        const authEndpoints = ["/auth/login", "/auth/refresh", "/users/signup", "/auth/google/login"];
+        const isAuthEndpoint = authEndpoints.some(endpoint =>
+            originalRequest.url?.includes(endpoint)
+        );
+        // Only attempt token refresh for 401 errors on protected routes
+        if (
+            error.response?.status === 401 &&
+            !originalRequest._retry &&
+            !isAuthEndpoint &&
+            typeof window !== "undefined"
+        ) {
+            originalRequest._retry = true;
 
-      try {
-        const refreshToken = authService.getRefreshToken();
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
+            try {
+                const refreshToken = authService.getRefreshToken();
+                if (!refreshToken) {
+                    throw new Error("No refresh token available");
+                }
+
+                const response = await api.post("/auth/refresh", {
+                    refresh_token: refreshToken,
+                });
+
+                const { access_token, refresh_token } = response.data;
+                await authService.storeTokens(access_token, refresh_token);
+                originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                console.error("Token refresh failed:", refreshError);
+                authService.removeTokens();
+                window.location.href = "/auth/login";
+                return Promise.reject(new Error("Session expired. Please login again."));
+            }
         }
 
-        const response = await api.post("/auth/refresh", {
-          refresh_token: refreshToken,
-        });
-
-        const { access_token, refresh_token } = response.data;
-        authService.storeTokens(access_token, refresh_token);
-
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        authService.removeTokens();
-        return Promise.reject(refreshError);
-      }
+        return Promise.reject(error);
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default api;
