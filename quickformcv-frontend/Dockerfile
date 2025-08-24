@@ -13,7 +13,7 @@ RUN npm install -g pnpm
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server
+ARG NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0
 ARG NEXT_PUBLIC_APP_URL=https://quickformcv.com
 ARG NEXTAUTH_URL=https://quickformcv.com
 
