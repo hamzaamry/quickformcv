@@ -112,7 +112,7 @@ async def upload_image(
             detail="An unexpected error occurred during upload"
         )
 
-@router.post("/", response_model=ResumeInDB)
+@router.post("", response_model=ResumeInDB)
 async def create_resume(
         resume: ResumeCreate,
         resume_service: ResumeService = Depends(get_resume_service),
@@ -120,7 +120,7 @@ async def create_resume(
 ) -> ResumeInDB:
     return resume_service.create_resume(resume=resume, user_id=current_user.id)
 
-@router.get("/", response_model=List[ResumeInDB])
+@router.get("", response_model=List[ResumeInDB])
 async def get_user_resumes(
         resume_service: ResumeService = Depends(get_resume_service),
         current_user: UserInDB = Depends(get_current_active_user)
