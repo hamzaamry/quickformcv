@@ -1,26 +1,27 @@
 services:
-  app:
+  quickformcv-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: clara-api
+    container_name: quickformcv-backend
     ports:
       - "8000:8000"
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     volumes:
+      # For development: mount local directories to persist data and logs
       - ./logs:/app/logs
       - ./uploads:/app/uploads
+      - ./tmp:/app/tmp
     networks:
-      - clara-network
+      - quickformcv-network
     restart: unless-stopped
 
   db:
     image: postgres:15-alpine
-    container_name: clara-postgres
+    container_name: quickformcv-postgres
     env_file:
       - .env
     environment:
@@ -30,19 +31,16 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - quickformcv_postgres_data:/var/lib/postgresql/data
     networks:
-      - clara-network
+      - quickformcv-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
-  postgres_data:
+  quickformcv_postgres_data:
+    driver: local
 
 networks:
-  clara-network:
+  quickformcv-network:
     driver: bridge
+    name: quickformcv-network

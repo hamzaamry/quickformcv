@@ -5,13 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PORT=8000
 
-# Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies including curl for healthcheck
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
@@ -20,27 +17,31 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
 COPY . .
 
-# Create logs directory and set proper permissions
-RUN mkdir -p logs uploads \
+RUN mkdir -p logs  tmp \
     && chown -R appuser:appuser /app \
-    && chmod -R 755 /app \
-    && chmod -R 777 logs uploads
+    && find /app -type d -exec chmod 755 {} \; \
+    && find /app -type f -exec chmod 644 {} \; \
+    && chmod 777 logs uploads tmp \
+    && chmod +x /app/app/main.py || true
 
-# Switch to non-root user (commented out for debugging)
-# USER appuser
+USER root
 
-# Expose port
+RUN echo '#!/bin/bash\n\
+# Ensure directories exist and have proper permissions\n\
+mkdir -p /app/logs /app/uploads /app/tmp\n\
+chmod 777 /app/logs /app/uploads /app/tmp\n\
+# Start the application\n\
+exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+
 EXPOSE $PORT
 
-# Run the application with gunicorn
-CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-"]
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "50"]
