@@ -1,6 +1,6 @@
 __pycache__
 uploads
-.env
+#.env
 logs
 sample.pdf
 testing.py
@@ -10,5 +10,5 @@ venv
 main.run.xml
 .run
 .vscode
-.env.local
-.env.production
+#.env.local
+#.env.production
