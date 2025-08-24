@@ -64,7 +64,6 @@ services:
       context: ./quickformcv-backend
       dockerfile: Dockerfile
     container_name: quickformcv-backend-prod
-    # Remove ports exposure - only accessible through nginx
     environment:
       # Database
       - POSTGRES_USER=${POSTGRES_USER}
@@ -98,6 +97,10 @@ services:
       - ENVIRONMENT=production
       - DEBUG=false
       - LOG_LEVEL=INFO
+
+      # IMPORTANT: Tell your backend to trust proxy headers
+      - FORWARDED_ALLOW_IPS=*
+      - PROXY_HEADERS_HOST=1
     depends_on:
       - quickformcv-db
     volumes:
@@ -129,13 +132,12 @@ services:
         - NEXT_PUBLIC_APP_URL=https://quickformcv.com
         - NEXTAUTH_URL=https://quickformcv.com
     container_name: quickformcv-frontend-prod
-    # Remove ports exposure - only accessible through nginx
     environment:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0  # Add this
-      - NEXT_PUBLIC_APP_URL=https://quickformcv.com                    # Add this
+      - NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0
+      - NEXT_PUBLIC_APP_URL=https://quickformcv.com
       - NEXTAUTH_URL=https://quickformcv.com
     depends_on:
       - quickformcv-backend
