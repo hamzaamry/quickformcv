@@ -134,6 +134,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0  # Add this
+      - NEXT_PUBLIC_APP_URL=https://quickformcv.com                    # Add this
+      - NEXTAUTH_URL=https://quickformcv.com
     depends_on:
       - quickformcv-backend
     volumes:

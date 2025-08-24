@@ -2,6 +2,7 @@ import axios from "axios";
 import { authService } from "./auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+console.log("API_BASE_URL", API_BASE_URL)
 
 const api = axios.create({
     baseURL: API_BASE_URL,
