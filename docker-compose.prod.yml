@@ -125,9 +125,9 @@ services:
       context: ./quickformcv-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://quickformcv.com/api-server/api/v0
-        - NEXT_PUBLIC_APP_URL=http://quickformcv.com
-        - NEXTAUTH_URL=http://quickformcv.com
+        - NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0
+        - NEXT_PUBLIC_APP_URL=https://quickformcv.com
+        - NEXTAUTH_URL=https://quickformcv.com
     container_name: quickformcv-frontend-prod
     # Remove ports exposure - only accessible through nginx
     environment:
