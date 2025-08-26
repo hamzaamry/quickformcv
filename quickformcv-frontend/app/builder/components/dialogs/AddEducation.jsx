@@ -196,7 +196,7 @@ export default function AddEducation({
                   <SelectTrigger>
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {MONTHS.map((month) => (
                       <SelectItem key={month} value={month}>
                         {month}
@@ -215,7 +215,7 @@ export default function AddEducation({
                   <SelectTrigger>
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {YEARS.map((year) => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
@@ -241,7 +241,7 @@ export default function AddEducation({
                   <SelectTrigger>
                     <SelectValue placeholder="Month" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {MONTHS.map((month) => (
                       <SelectItem key={month} value={month}>
                         {month}
@@ -261,7 +261,7 @@ export default function AddEducation({
                   <SelectTrigger>
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px]">
                     {YEARS.map((year) => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
