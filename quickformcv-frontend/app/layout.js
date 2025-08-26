@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import Providers from "./providers";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { NavigationLoaderProvider } from "@/hooks/useNavigationLoader";
@@ -22,18 +23,32 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  return (
-      <html lang="en">
-          <head>
+    return (
+        <html lang="en">
+        <head>
             <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          </head>
-          <body className={inter.className}>
-          <Providers>
+        </head>
+        <body className={inter.className}>
+        {/* Google Analytics */}
+        <Script
+            src="https://www.googletagmanager.com/gtag/js?id=G-HQ39WTN17K"
+            strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+            {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-HQ39WTN17K');
+              `}
+        </Script>
+
+        <Providers>
             <AuthProvider>
-              <NavigationLoaderProvider>{children}</NavigationLoaderProvider>
+                <NavigationLoaderProvider>{children}</NavigationLoaderProvider>
             </AuthProvider>
-          </Providers>
-          </body>
-      </html>
-  );
+        </Providers>
+        </body>
+        </html>
+    );
 }
