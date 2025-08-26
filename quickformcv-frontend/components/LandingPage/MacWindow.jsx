@@ -1,6 +1,6 @@
 export const MacWindow = ({
   children,
-  title = "ClaraHire - Resume Builder",
+  title = "QuickFormCV - Resume Builder",
   className = "",
 }) => {
   return (
