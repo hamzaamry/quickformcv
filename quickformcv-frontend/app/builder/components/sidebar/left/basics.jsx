@@ -18,10 +18,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useResumeData } from "@/hooks/useResumeData";
 import { useImageUpload } from "@/app/builder/hooks/useImageUpload";
 import { useParams } from "next/navigation";
+import { getCountries } from 'react-phone-number-input/input';
+import { getCountryCallingCode } from 'react-phone-number-input';
+
+const getCountryFlag = (countryCode) => {
+  const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt());
+  return String.fromCodePoint(...codePoints);
+};
+
+const countries = getCountries();
+const COUNTRY_OPTIONS = countries.map(country => {
+  const callingCode = getCountryCallingCode(country);
+  const flag = getCountryFlag(country);
+
+  return {
+    code: callingCode,
+    country: country,
+    flag: flag,
+    label: `${flag} +${callingCode}`
+  };
+}).sort((a, b) => parseInt(a.code) - parseInt(b.code));
 
 export default function Basics() {
   const params = useParams();
@@ -29,6 +52,9 @@ export default function Basics() {
   const { basics, updateBasics, isLoading } = useResumeData(resumeId);
   const { uploadImage, isUploading, uploadError, reset } = useImageUpload();
   const fileInputRef = useRef(null);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("216");
+
+  const selectedCountryOption = COUNTRY_OPTIONS.find(option => option.code === selectedCountryCode);
 
   const updatePicture = (updates) => {
     updateBasics({
@@ -273,24 +299,27 @@ export default function Basics() {
                     Phone number
                   </Label>
                   <div className="flex gap-3">
-                    <Select defaultValue="216">
-                      <SelectTrigger className="w-[120px] h-10 bg-white border-gray-200">
-                        <SelectValue placeholder="Code" />
+                    <Select
+                        value={selectedCountryCode}
+                        onValueChange={setSelectedCountryCode}
+                    >
+                      <SelectTrigger className="w-[140px] h-10 bg-white border-gray-200">
+                        <SelectValue>
+                          {selectedCountryOption ? selectedCountryOption.label : "Select..."}
+                        </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="216">🇹🇳 +216</SelectItem>
-                        <SelectItem value="1">🇺🇸 +1</SelectItem>
-                        <SelectItem value="33">🇫🇷 +33</SelectItem>
-                        <SelectItem value="44">🇬🇧 +44</SelectItem>
-                        <SelectItem value="49">🇩🇪 +49</SelectItem>
-                        <SelectItem value="39">🇮🇹 +39</SelectItem>
-                        <SelectItem value="34">🇪🇸 +34</SelectItem>
+                      <SelectContent className="max-h-[200px]">
+                        {COUNTRY_OPTIONS.map((option) => (
+                            <SelectItem key={`${option.country}-${option.code}`} value={option.code}>
+                              {option.label}
+                            </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="50 763 912"
+                      placeholder="your phone number"
                       className="flex-1 h-10 bg-white border-gray-200 focus:border-blue-400 focus:ring-blue-400/20"
                       value={basics.phone ?? ""}
                       onChange={(e) => updateBasics({ phone: e.target.value })}
@@ -316,9 +345,9 @@ export default function Basics() {
                 </div>
               </div>
             </div>
-          )}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        )}
+      </AccordionContent>
+    </AccordionItem>
+  </Accordion>
   );
 }
