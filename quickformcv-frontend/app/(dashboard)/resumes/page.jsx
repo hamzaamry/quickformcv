@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Clock, Search } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import {
   EmptyState,
   LoadingSkeleton,
@@ -11,7 +10,6 @@ import {
 } from "./components";
 import { CreateResumeDialog } from "@/app/(dashboard)/resumes/components/Dialogs/CreateResumeDialog";
 import { useResumes } from "@/hooks/useResume";
-import { authService } from "@/services/api/auth";
 import { motion } from "framer-motion";
 
 export default function Resumes() {
@@ -19,28 +17,6 @@ export default function Resumes() {
   const { data, isLoading } = useResumes();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("Latest First");
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const handleTokensFromURL = async () => {
-      const accessToken = searchParams.get("access_token");
-      const refreshToken = searchParams.get("refresh_token");
-
-      if (accessToken && refreshToken) {
-        try {
-          await authService.storeTokens(accessToken, refreshToken);
-          // Clean URL by removing query parameters without page reload
-          const url = new URL(window.location);
-          url.searchParams.delete("access_token");
-          url.searchParams.delete("refresh_token");
-          window.history.replaceState({}, document.title, url.toString());
-        } catch (error) {
-          console.error("Failed to store tokens from URL:", error);
-        }
-      }
-    };
-    handleTokensFromURL();
-  }, [searchParams]);
 
   const filteredAndSortedResumes = useMemo(() => {
     if (!data?.data) return [];
