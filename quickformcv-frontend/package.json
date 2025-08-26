@@ -47,6 +47,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.471.2",
     "next": "15.3.3",
+    "next-google-analytics": "^0.7.0",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.3.0",
     "react": "^19.0.0",

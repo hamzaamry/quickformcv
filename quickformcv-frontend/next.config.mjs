@@ -2,10 +2,17 @@
  * @type {import('next').NextConfig}
  */
 const nextConfig = {
-  // Only use standalone when building for Docker
+  experimental: {
+    instrumentationHook: true,
+  },
+
   ...(process.env.NODE_ENV === 'production' && process.env.DOCKER_BUILD && {
-    output: 'standalone'
+    output: 'standalone',
   }),
+
+  googleAnalytics: {
+    measurementId: 'G-HQ39WTN17K',
+  },
 };
 
 export default nextConfig;
