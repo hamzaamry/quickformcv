@@ -6,7 +6,7 @@ import { authService } from "@/services/api/auth";
 
 const AuthContext = createContext({});
 
-const publicRoutes = ["/", "/auth/login", "/auth/signup"];
+const publicRoutes = ["/", "/auth/login", "/auth/signup", "/blog"];
 
 const isPublicRoute = (pathname) => {
   if (publicRoutes.includes(pathname)) {
