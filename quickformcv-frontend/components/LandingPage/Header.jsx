@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { QuickFormLogo } from "@/components/icons/QuickFormLogo";
+import { QuickFormLogoBlue } from "@/components/icons/QuickFormLogoBlue";
 
 export const Header = () => {
   return (
@@ -8,7 +9,10 @@ export const Header = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-6">
           <Link href="/" className="flex items-center cursor-pointer">
-            <QuickFormLogo className="h-10 w-auto" />
+            {/* Desktop Logo */}
+            <QuickFormLogo className="hidden md:block h-10 w-auto" />
+            {/* Mobile Logo */}
+            <QuickFormLogoBlue className="block md:hidden h-8 w-auto" />
           </Link>
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
@@ -38,12 +42,7 @@ export const Header = () => {
             </Link>
           </nav>
           {/* CTA Buttons */}
-          <div className="flex items-center space-x-4">
-            <Link href="/auth/login">
-              <Button variant="ghost" className="text-sm font-medium">
-                Sign in
-              </Button>
-            </Link>
+          <div className="flex items-center">
             <Link href="/auth/signup">
               <Button className="bg-blue-600 hover:bg-blue-700 text-sm font-medium">
                 Start building free

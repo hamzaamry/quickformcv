@@ -9,7 +9,7 @@ export const Testimonials = () => {
       initial: "S",
       bgColor: "bg-blue-500",
       content:
-        "ClaraHire made creating my resume so easy! The templates are beautiful and the real-time preview saved me hours.",
+        "QuickFormCV made creating my resume so easy! The templates are beautiful and the real-time preview saved me hours.",
     },
     {
       name: "Michael Rodriguez",

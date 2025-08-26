@@ -46,8 +46,8 @@ export const HeroSection = () => {
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 sm:gap-x-6">
           <Link href="/auth/signup">
             <Button
-              size="lg"
-              className="bg-gray-900 hover:bg-gray-800 text-white px-8 w-full sm:w-auto"
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 w-full sm:w-auto"
             >
               Start building free
             </Button>
@@ -70,7 +70,7 @@ export const HeroSection = () => {
           <MacWindow title="">
             <Image
               src="/heroScreen.png"
-              alt="ClaraHire CV Builder Interface"
+              alt="QuickFormCV CV Builder Interface"
               width={1000}
               height={600}
               className="w-full h-auto mb-8"
