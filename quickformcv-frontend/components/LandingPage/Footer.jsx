@@ -1,4 +1,4 @@
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { QuickFormLogoWhite } from "@/components/icons/QuickFormLogoWhite";
 
@@ -17,14 +17,14 @@ export const Footer = () => {
             </p>
             <div className="mt-6 flex space-x-4">
               <Link
-                href="mailto:support@QuickFormCV.com"
+                href="mailto:hamzaamry009@gmail.com"
                 className="text-gray-400 hover:text-white"
               >
                 <Mail className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white">
+{/*              <Link href="#" className="text-gray-400 hover:text-white">
                 <MessageCircle className="h-5 w-5" />
-              </Link>
+              </Link>*/}
             </div>
           </div>
           <div>
@@ -53,14 +53,14 @@ export const Footer = () => {
                   FAQ
                 </Link>
               </li>
-              <li>
+{/*              <li>
                 <Link
                   href="/pricing"
                   className="text-gray-400 hover:text-white"
                 >
                   Pricing
                 </Link>
-              </li>
+              </li>*/}
             </ul>
           </div>
           <div>
@@ -70,20 +70,20 @@ export const Footer = () => {
             <ul className="mt-4 space-y-2">
               <li>
                 <Link
-                  href="mailto:support@QuickFormCV.com"
+                  href="mailto:hamzaamry009@gmail.com"
                   className="text-gray-400 hover:text-white"
                 >
                   Contact Us
                 </Link>
               </li>
-              <li>
+{/*              <li>
                 <Link
                   href="/privacy"
                   className="text-gray-400 hover:text-white"
                 >
                   Privacy Policy
                 </Link>
-              </li>
+              </li>*/}
               <li>
                 {/*                <Link href="/terms" className="text-gray-400 hover:text-white">
                   Terms of Service
