@@ -1,5 +1,6 @@
-"use client";
+"use client"
 
+import { OnboardingTrigger } from "@/app/builder/components/onboarding/OnboardingTrigger"
 import { ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -24,9 +25,7 @@ export function TopBar() {
       <div className="sticky top-0 z-50 w-full">
         <div className="flex h-16 items-center justify-between border-b border-gray-200/80 bg-white/95 backdrop-blur-sm px-6 shadow-sm">
           <div className="flex items-center">
-            <Link
-                href="/resumes"
-            >
+            <Link href="/resumes">
               <div className="relative">
                 <QuickFormLogo className="h-8 w-auto" />
               </div>
@@ -77,7 +76,8 @@ export function TopBar() {
                 </div>
             ) : (
                 <>
-                  <div className="hidden sm:block">
+                  <OnboardingTrigger />
+                  <div className="hidden sm:block" data-onboarding="export-button">
                     <PDFExportButton resumeData={data?.data} />
                   </div>
                   <div className="relative">
@@ -88,7 +88,7 @@ export function TopBar() {
             )}
           </div>
         </div>
-      <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-    </div>
-  );
+        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+      </div>
+  )
 }

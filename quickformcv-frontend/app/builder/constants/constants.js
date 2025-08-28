@@ -174,3 +174,63 @@ export const SKILLS = [
 
 export const MAX_ALLOWED_PAGES = 2;
 export const CHARATERS_LIMIT = 600;
+
+export const ONBOARDING_STEPS = [
+  {
+    id: "welcome",
+    title: "Welcome to QuickFormCV! 🎉",
+    description: "Let's take a quick tour to help you create your perfect resume. This will only take a minute!",
+    target: "body",
+    position: "top",
+  },
+  {
+    id: "left-sidebar",
+    title: "Resume Content",
+    description:
+        "This is where you'll add all your resume information. Start with the Basics section to add your personal details.",
+    target: "[data-onboarding='left-sidebar']",
+    position: "right",
+  },
+  {
+    id: "basics-section",
+    title: "Personal Information",
+    description: "Fill in your name, contact details, and professional headline. This forms the header of your resume.",
+    target: "[data-onboarding='basics-section']",
+    position: "right",
+  },
+  {
+    id: "resume-preview",
+    title: "Live Preview",
+    description: "Watch your resume come to life! Every change you make will be instantly reflected here.",
+    target: "[data-onboarding='resume-preview']",
+    position: "left",
+  },
+  {
+    id: "right-sidebar",
+    title: "Customization Panel",
+    description: "Personalize your resume's appearance with different templates, fonts, and layouts.",
+    target: "[data-onboarding='right-sidebar']",
+    position: "left",
+  },
+  {
+    id: "template-selection",
+    title: "Choose Your Template",
+    description: "Select from professional templates that best match your industry and style preferences.",
+    target: "[data-onboarding='template-selection']",
+    position: "left",
+  },
+  {
+    id: "export-button",
+    title: "Export Your Resume",
+    description: "Once you're happy with your resume, click here to download it as a PDF.",
+    target: "[data-onboarding='export-button']",
+    position: "bottom",
+  },
+  {
+    id: "complete",
+    title: "You're All Set! ✨",
+    description: "You now know the basics of creating a resume. Start building your professional story!",
+    target: "body",
+    position: "top",
+  },
+]

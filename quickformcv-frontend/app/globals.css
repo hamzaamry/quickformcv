@@ -161,3 +161,66 @@ body {
   max-width: 210mm;
   max-height: 297mm;
 }
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.0);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+  pointer-events: none;
+}
+
+.onboarding-spotlight {
+  position: fixed;
+  z-index: 1001;
+  border-radius: 8px;
+  pointer-events: none;
+  animation: spotlightPulse 2s ease-in-out infinite;
+  transition: all 0.3s ease-out;
+
+  /* Create a clear cutout with blue border */
+  box-shadow:
+          0 0 0 4px rgb(59 130 246 / 0.6),
+          0 0 0 8px rgb(59 130 246 / 0.2),
+          0 0 0 9999px rgba(0, 0, 0, 0.75);
+}
+
+/* Ensure spotlighted element stays interactive */
+.onboarding-spotlight::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: inherit;
+  pointer-events: auto;
+  z-index: 1002;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spotlightPulse {
+  0%, 100% {
+    box-shadow:
+            0 0 0 4px rgb(59 130 246 / 0.6),
+            0 0 0 8px rgb(59 130 246 / 0.2),
+            0 0 0 9999px rgba(0, 0, 0, 0.75);
+  }
+  50% {
+    box-shadow:
+            0 0 0 6px rgb(59 130 246 / 0.8),
+            0 0 0 12px rgb(59 130 246 / 0.3),
+            0 0 0 9999px rgba(0, 0, 0, 0.75);
+  }
+}
