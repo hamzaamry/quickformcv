@@ -94,7 +94,7 @@ export const Footer = () => {
         </div>
         <div className="mt-8 border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 QuickForm CV. All rights reserved.
+            © 2025 QuickForm CV. All rights reserved.
           </p>
         </div>
       </div>
