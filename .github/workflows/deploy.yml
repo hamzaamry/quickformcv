@@ -1,4 +1,4 @@
-name: Deploy QuickFormCV to VPS
+name: Deploy QuickFormCV
 
 on:
   push:
@@ -36,22 +36,28 @@ jobs:
             echo "📥 Pulling latest code..."
             git pull origin main
           
-            # Create backup of current database (optional)
-            echo "💾 Creating database backup..."
-            timestamp=$(date +%Y%m%d_%H%M%S)
-            docker-compose -f docker-compose.prod.yml exec -T quickformcv-db pg_dump -U $POSTGRES_USER $POSTGRES_DB > "backup_${timestamp}.sql" 2>/dev/null || echo "⚠️  Backup skipped (database may not be running)"
+            # Check if services are running and create backup
+            echo "📋 Checking running services..."
+            if docker compose -f docker-compose.prod.yml ps | grep -q "quickformcv-db"; then
+              echo "💾 Creating database backup..."
+              timestamp=$(date +%Y%m%d_%H%M%S)
+              mkdir -p backups
+              docker compose -f docker-compose.prod.yml exec -T quickformcv-db pg_dump -U postgres BMO > "backups/backup_${timestamp}.sql" 2>/dev/null && echo "✅ Backup created successfully" || echo "⚠️  Backup failed"
+            else
+              echo "⚠️  Database not running, skipping backup"
+            fi
           
             # Stop services
             echo "⏹️  Stopping services..."
-            docker-compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml down
           
             # Pull latest images
             echo "🐳 Pulling latest Docker images..."
-            docker-compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml pull
           
             # Build and start services
             echo "🔨 Building and starting services..."
-            docker-compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml up -d --build
           
             # Clean up unused images and containers
             echo "🧹 Cleaning up..."
