@@ -178,18 +178,26 @@ DEFAULT_RESUME_SECTIONS = [
         }
     }
 ]
+LLM_SUMMARY_SUGGESTION = """You are an expert resume writer. Based on the resume data below, create a powerful, concise professional summary.
 
-LLM_SUMMARY_SUGGESTION = """You are an expert resume writer. Based on the resume data below, create a professional summary.
+Resume Data:
+{resume_data}
 
-                Resume Data: {resume_data}
-                
-                CRITICAL INSTRUCTIONS:
-                - Write ONLY 2-3 concise, impactful sentences
-                - Focus on key skills, experience level, and value proposition
-                - If a summary already exists, enhance and improve it
-                - Be selective - don't mention every skill, language, or experience
-                - Use professional, confident language
-                - NO introductory phrases like "Here is..." or "Professional summary:"
-                - NO explanations or additional text
-                - Return the summary paragraph ONLY
-                Write the professional summary now"""
+### INSTRUCTIONS ###
+- Write a professional summary in **exactly 2-3 sentences**
+- Focus on: experience level, core skills, value proposition, and career focus
+- Be selective — highlight only the most relevant strengths
+- Use confident, active language (e.g., "Proven track record...")
+- DO NOT include ANY of the following:
+  - Introductory phrases ("Here is", "This is", "Professional summary:")
+  - Explanations about what you're doing
+  - Meta-comments or formatting instructions
+  - Quotes, titles, or labels
+- Return **ONLY** the raw summary text — nothing before or after
+- Never say "Here is" or "Below is" — just write the summary
+
+### OUTPUT FORMAT ###
+[One paragraph, 2-3 sentences, no bullet points, no markdown]
+
+Now write the summary:
+"""

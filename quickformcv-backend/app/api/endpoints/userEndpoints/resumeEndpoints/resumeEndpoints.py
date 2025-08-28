@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import List
 from uuid import UUID
 import os
 import cloudinary
@@ -47,9 +47,30 @@ async def suggest_resume_summary(
                 detail="Failed to generate AI suggestion"
             )
 
+        cleaned = ai_response.strip()
+
+        prefixes_to_remove = [
+            "Here is the rewritten professional summary:",
+            "Here is the professional summary:",
+            "Here is a revised version of the professional summary:",
+            "Professional summary:",
+            "Summary:",
+            "Here is",
+            "This is",
+            "Below is",
+            "Generated summary:",
+        ]
+
+        for prefix in prefixes_to_remove:
+            if cleaned.lower().startswith(prefix.lower()):
+                cleaned = cleaned[len(prefix):].strip()
+                break
+
+        cleaned = cleaned.strip(" .,\"'")
+
         return AISuggestionResponse(
             success=True,
-            summary_suggestion=ai_response.strip()
+            summary_suggestion=cleaned
         )
 
     except Exception as e:
