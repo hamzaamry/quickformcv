@@ -69,7 +69,7 @@ export const HeroSection = () => {
         <div className="relative mx-auto max-w-5xl">
           <MacWindow title="">
             <Image
-              src="/heroScreen.png"
+              src="/landingIMG.png"
               alt="QuickFormCV CV Builder Interface"
               width={1000}
               height={600}
