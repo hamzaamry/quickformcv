@@ -50,9 +50,7 @@ export default function Template() {
                   onClick={() => handleTemplateChange(key)}
                 >
                   <img
-                    src={
-                      template.image || "/placeholder.svg?height=300&width=200"
-                    }
+                    src={template.image}
                     alt={template.name}
                     className="object-cover w-full h-full"
                   />

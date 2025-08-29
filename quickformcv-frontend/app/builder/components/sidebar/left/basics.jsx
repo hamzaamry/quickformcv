@@ -146,7 +146,7 @@ export default function Basics() {
                           </div>
                         ) : basics.picture?.url ? (
                           <img
-                            src={basics.picture.url || "/placeholder.svg"}
+                            src={basics.picture.url}
                             alt="Profile"
                             className="w-full h-full object-cover rounded-lg"
                           />

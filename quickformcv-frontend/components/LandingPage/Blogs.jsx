@@ -8,7 +8,7 @@ export const Blogs = () => {
       id="blogs"
       className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 py-24 sm:py-32"
     >
-      <div className="absolute inset-0 bg-[url('/placeholder.svg?height=800&width=1200&text=blog-pattern')] opacity-5"></div>
+      <div className="absolute inset-0 opacity-5"></div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
