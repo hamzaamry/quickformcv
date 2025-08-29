@@ -12,6 +12,21 @@ const api = axios.create({
     },
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
@@ -49,7 +64,19 @@ api.interceptors.response.use(
             !isAuthEndpoint &&
             typeof window !== "undefined"
         ) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return api(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 const refreshToken = authService.getRefreshToken();
@@ -61,16 +88,28 @@ api.interceptors.response.use(
                     refresh_token: refreshToken,
                 });
 
-                const { access_token, refresh_token } = response.data;
-                await authService.storeTokens(access_token, refresh_token);
+                const { access_token, refresh_token: newRefreshToken } = response.data;
+                await authService.storeTokens(access_token, newRefreshToken || refreshToken);
                 originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                processQueue(null, access_token);
                 return api(originalRequest);
             } catch (refreshError) {
+                console.error("Token refresh failed:", refreshError);
+                processQueue(refreshError, null);
                 authService.removeTokens();
-                window.location.href = "/auth/login";
+                if (window.location.pathname !== "/auth/login") {
+                    window.location.href = "/auth/login";
+                }
                 return Promise.reject(new Error("Session expired. Please login again."));
+            } finally {
+                isRefreshing = false;
             }
         }
+
+        if (error.response?.status === 401 && isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+
         return Promise.reject(error);
     }
 );

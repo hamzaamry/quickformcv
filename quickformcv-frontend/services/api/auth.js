@@ -50,26 +50,21 @@ export const authService = {
   storeTokens: async (accessToken, refreshToken) => {
     if (!isBrowser) return;
 
-    return new Promise((resolve, reject) => {
-      try {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
+    try {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
 
-        setTimeout(() => {
-          const storedAccess = localStorage.getItem("accessToken");
-          const storedRefresh = localStorage.getItem("refreshToken");
+      const storedAccess = localStorage.getItem("accessToken");
+      const storedRefresh = localStorage.getItem("refreshToken");
 
-          if (storedAccess === accessToken && storedRefresh === refreshToken) {
-            resolve();
-          } else {
-            reject(new Error("Failed to verify token storage"));
-          }
-        }, 50);
-      } catch (error) {
-        console.error("Failed to store tokens:", error);
-        reject(new Error("Failed to save login session"));
+      if (storedAccess !== accessToken || storedRefresh !== refreshToken) {
+        throw new Error("Failed to verify token storage");
       }
-    });
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Failed to store tokens:", error);
+      throw new Error("Failed to save login session");
+    }
   },
 
   removeTokens: () => {
@@ -105,6 +100,25 @@ export const authService = {
   isAuthenticated: () => {
     if (!isBrowser) return false;
     const token = authService.getAccessToken();
-    return !!token;
+    if (!token) return false;
+
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+
+      const payload = JSON.parse(atob(parts[1]));
+      const now = Date.now() / 1000;
+
+      if (payload.exp && payload.exp < now) {
+        authService.removeTokens();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Token validation error:", error);
+      authService.removeTokens();
+      return false;
+    }
   },
 };

@@ -1,23 +1,26 @@
-"use client";
+import { useQuery } from '@tanstack/react-query';
+import { authService } from '@/services/api/auth';
 
-import { useQuery } from "@tanstack/react-query";
-import { authService } from "@/services/api/auth";
-import { useRouter } from "next/navigation";
-
-export const useUser = () => {
-  const router = useRouter();
-  const accessToken = authService.getAccessToken();
-
+export const useUser = (options = {}) => {
   return useQuery({
-    queryKey: ["user"],
+    queryKey: ['user'],
     queryFn: authService.getCurrentUser,
-    enabled: !!accessToken, // Only run the query if we have an access token
-    retry: false,
-    onError: (error) => {
+    enabled: options.enabled !== undefined ? options.enabled : true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry if it's a 401 error (unauthorized)
       if (error?.response?.status === 401) {
-        authService.removeTokens();
-        router.push("/auth/login");
+        return false;
       }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
     },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error('User fetch error:', error);
+      // Don't automatically clear tokens here - let the AuthProvider handle it
+    },
+    ...options
   });
 };
