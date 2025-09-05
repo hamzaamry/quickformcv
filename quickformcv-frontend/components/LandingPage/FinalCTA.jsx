@@ -12,7 +12,6 @@ export const FinalCTA = () => {
           </h2>
           <p className="mt-4 text-lg text-blue-100">
             Join thousands of job seekers who are already using QuickForm CV.
-            <strong> Free during beta - no credit card required.</strong>
           </p>
           <div className="mt-8">
             <Link href="/auth/signup">
@@ -25,9 +24,6 @@ export const FinalCTA = () => {
               </Button>
             </Link>
           </div>
-          <p className="mt-4 text-sm text-blue-200">
-            ⏰ Beta access is limited. Secure your free account today.
-          </p>
         </div>
       </div>
     </div>

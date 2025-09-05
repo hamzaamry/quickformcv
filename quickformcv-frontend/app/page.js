@@ -9,21 +9,23 @@ import {
   Header,
   HeroSection,
   Testimonials,
+  Pricing,
 } from "@/components/LandingPage";
 
 export default function QuickFormCVLanding() {
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <main>
-        <HeroSection />
-        <Features />
-        <Testimonials />
-        <Blogs />
-        <FAQ />
-        <FinalCTA />
-      </main>
-      <Footer />
-    </div>
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main>
+          <HeroSection />
+          <Features />
+          <Testimonials />
+          <Pricing />
+          <Blogs />
+          <FAQ />
+          <FinalCTA />
+        </main>
+        <Footer />
+      </div>
   );
 }
