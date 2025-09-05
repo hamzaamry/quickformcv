@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from .basics import Basics
 from .metadata import Metadata
 from .base import Pages
-from .sections import BaseSection, ItemsSection, SummarySection, CustomSection
+from .sections import ItemsSection, SummarySection, CustomSection
 
 class ResumeBase(BaseModel):
     title: str

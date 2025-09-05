@@ -1,5 +1,5 @@
-from typing import List, Union, Literal, Optional
-from pydantic import BaseModel, EmailStr, Field
+from typing import List
+from pydantic import BaseModel, Field
 from .base import UrlSchema, CustomField, Picture
 
 class Basics(BaseModel):

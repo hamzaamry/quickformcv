@@ -1,8 +1,6 @@
 import io
 from typing import Dict, Union
-
 from PyPDF2 import PdfReader
-
 from .logging_config import logger
 
 

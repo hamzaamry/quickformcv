@@ -1,6 +1,5 @@
-from typing import List, Optional, Dict
+from typing import List, Dict
 from uuid import UUID
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.schemas.userSchemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Basics

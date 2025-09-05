@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 class SectionItemAdd(BaseModel):
     item_data: Dict[str, Any]
