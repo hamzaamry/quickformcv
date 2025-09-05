@@ -35,5 +35,8 @@ export const resumeService = {
     });
   },
   getAISummarySuggestion: (resumeId, resumeData) =>
-      api.post(`/resumes/ai/suggest-summary`, { resume_data: resumeData }),
+    api.post(`/resumes/ai/suggest-summary`, { resume_data: resumeData }),
+
+  getJobRecommendations: (resumeId) =>
+      api.get(`/resumes/${resumeId}/job-search`),
 };

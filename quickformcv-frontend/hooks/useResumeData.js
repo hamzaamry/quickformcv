@@ -6,6 +6,7 @@ import { getTemplateByName, templates } from "@/app/builder/templates";
 
 const resumeKeys = {
   single: (id) => ["resume", id],
+  jobSearch: (id) => ["resume", id, "job-search"],
 };
 
 // Main hook
@@ -56,6 +57,23 @@ export const useResumeData = (resumeId) => {
       [resumeData.sections],
   );
 
+  // Resume completeness checker
+  const resumeComplete = useMemo(() => {
+    const basics = resumeData.basics || {};
+    const headline = basics.headline;
+
+    // Get experience and skills data
+    const experienceItems = getSectionData("experiences").items || [];
+    const skillItems = getSectionData("skills").items || [];
+
+    // Check requirements: headline, at least 1 experience, at least 1 skill
+    const hasHeadline = headline && headline.trim().length > 0;
+    const hasExperience = experienceItems.length > 0;
+    const hasSkills = skillItems.length > 0;
+
+    return hasHeadline && hasExperience && hasSkills;
+  }, [resumeData.basics, getSectionData]);
+
   const updateCache = useCallback(
       (updateFn) => {
         queryClient.setQueryData(resumeKeys.single(resumeId), (oldData) => {
@@ -98,6 +116,13 @@ export const useResumeData = (resumeId) => {
     onError: (error) => {
       console.error("Update failed:", error);
       queryClient.invalidateQueries(resumeKeys.single(resumeId));
+    },
+  });
+
+  const jobSearchMutation = useMutation({
+    mutationFn: () => resumeService.getJobRecommendations(resumeId),
+    onError: (error) => {
+      console.error("Job search failed:", error);
     },
   });
 
@@ -330,6 +355,13 @@ export const useResumeData = (resumeId) => {
       [updateMutation, updateCache, queryClient, resumeId],
   );
 
+  const searchJobs = useCallback(async () => {
+    if (!resumeComplete) {
+      throw new Error("Resume must be complete before searching for jobs");
+    }
+    return jobSearchMutation.mutateAsync();
+  }, [resumeComplete, jobSearchMutation]);
+
   return {
     resumeData,
     basics: resumeData.basics || {},
@@ -342,6 +374,9 @@ export const useResumeData = (resumeId) => {
     typography: typographyData,
     templateName,
     templateConfig,
+
+    // Resume completeness
+    resumeComplete,
 
     // Section-specific data getters
     getSectionData,
@@ -374,5 +409,10 @@ export const useResumeData = (resumeId) => {
     changeTemplate,
     getAISummarySuggestion: aiSummaryMutation.mutateAsync,
     isAILoading: aiSummaryMutation.isPending,
+
+    // Job search operations
+    searchJobs,
+    isJobSearchLoading: jobSearchMutation.isPending,
+    jobSearchError: jobSearchMutation.error,
   };
 };

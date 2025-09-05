@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { UserAvatar } from "@/components/shared/userAvatar";
 import { PDFExportButton } from "@/app/builder/components/PDFExportButton";
+import CompletenessNotification  from "@/app/builder/components/shared/CompletenessNotification"
 import { useResume } from "@/hooks/useResume";
 
-export function TopBar() {
+export function TopBar({ completenessData }) {
   const params = useParams();
   const resumeId = params?.id;
   const { data, isLoading } = useResume(resumeId);
@@ -76,6 +77,15 @@ export function TopBar() {
                 </div>
             ) : (
                 <>
+                  {/* Completeness Notification */}
+                  {completenessData && (
+                      <CompletenessNotification
+                          completionPercentage={completenessData.completionPercentage}
+                          missingFields={completenessData.missingFields}
+                          isJobSearchReady={completenessData.isJobSearchReady}
+                      />
+                  )}
+
                   <OnboardingTrigger />
                   <div className="hidden sm:block" data-onboarding="export-button">
                     <PDFExportButton resumeData={data?.data} />

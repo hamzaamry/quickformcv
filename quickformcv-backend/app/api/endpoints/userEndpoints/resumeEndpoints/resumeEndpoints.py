@@ -8,13 +8,13 @@ import cloudinary.uploader
 from cloudinary.exceptions import Error as CloudinaryError
 from app.Database import get_db
 from app.core.auth import get_current_active_user
-from app.schemas.userSchemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Basics, SummarySection, SummaryUpdate, AISuggestionRequest, AISuggestionResponse
+from app.schemas.userSchemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Basics, SummaryUpdate, AISuggestionRequest, AISuggestionResponse
 from app.schemas.userSchemas.userSchema import UserInDB
 from app.services.userServices.ResumeServices.resumeService import ResumeService
 from app.schemas.userSchemas.resumeSchema.base import PagesUpdate
 from app.services.shared.GroqService import GroqService
-from pydantic import BaseModel
 from app.services.userServices.constants import LLM_SUMMARY_SUGGESTION
+from app.services.agent.JobQueryGenerator import JobQueryGenerator
 
 # Configure Cloudinary
 cloudinary.config(
@@ -28,6 +28,53 @@ router = APIRouter(prefix="/resumes", tags=["resumes"])
 
 def get_resume_service(db: Session = Depends(get_db)) -> ResumeService:
     return ResumeService(db)
+
+@router.get("/{resume_id}/job-search", response_model=dict)
+async def get_jobs_for_resume(
+        resume_id: UUID,
+        resume_service: ResumeService = Depends(get_resume_service),
+        current_user: UserInDB = Depends(get_current_active_user)
+) -> dict:
+    """
+    Get job recommendations for a resume
+    """
+    try:
+        # Get resume data
+        resume_data = resume_service.get_complete_resume(resume_id, current_user.id)
+        resume_dict = resume_data.model_dump() if hasattr(resume_data, 'model_dump') else dict(resume_data)
+
+        # Generate and search
+        groq_service = GroqService()
+        job_generator = JobQueryGenerator(groq_service)
+        results = await job_generator.generate_and_search(resume_dict)
+
+        # Extract just the job data
+        job_offers = []
+        for query_key, query_data in results.items():
+            query_results = query_data.get('results', {})
+            if query_results and 'data' in query_results:
+                jobs = query_results['data']
+                for job in jobs:
+                    job_offers.append({
+                        "query_used": query_data.get('query'),
+                        "job_title": job.get('job_title'),
+                        "employer_name": job.get('employer_name'),
+                        "job_location": job.get('job_city'),
+                        "job_description": job.get('job_description', ''),
+                        "job_apply_link": job.get('job_apply_link'),
+                        "job_posted_at": job.get('job_posted_at_datetime_utc')
+                    })
+
+        return {
+            "total_jobs_found": len(job_offers),
+            "jobs": job_offers
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get job recommendations: {str(e)}"
+        )
 
 @router.post("/ai/suggest-summary", response_model=AISuggestionResponse)
 async def suggest_resume_summary(
