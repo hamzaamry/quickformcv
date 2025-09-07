@@ -43,7 +43,6 @@ export const Pricing = () => {
                 "3 job searches per week",
                 "70% of results visible (30% blurred)",
                 "Priority email support",
-                "Export in multiple formats"
             ],
             buttonText: "Start Pro Trial",
             buttonVariant: "default",

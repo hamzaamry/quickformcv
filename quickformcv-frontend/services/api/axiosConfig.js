@@ -57,6 +57,12 @@ api.interceptors.response.use(
             originalRequest.url?.includes(endpoint)
         );
 
+        // For subscription limit errors, don't try to refresh token
+        if (error.response?.status === 403 &&
+            error.response?.data?.detail?.includes("limit reached")) {
+            return Promise.reject(error);
+        }
+
         // Only attempt token refresh for 401 errors on protected routes
         if (
             error.response?.status === 401 &&
