@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Uuid
 
@@ -19,6 +19,13 @@ class User(Base):
     username = Column(String)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+
+    subscription_tier = Column(String, default="free", nullable=False)
+    subscription_status = Column(String, default="active", nullable=False)
+    monthly_ai_credits_used = Column(Integer, default=0, nullable=False)
+    monthly_job_searches_used = Column(Integer, default=0, nullable=False)
+    last_reset_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

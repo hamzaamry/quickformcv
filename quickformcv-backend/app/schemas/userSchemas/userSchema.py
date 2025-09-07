@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -12,18 +12,26 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
+    subscription_tier: Literal["free", "pro", "premium"] = "free"
 
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8)
+    subscription_tier: Optional[Literal["free", "pro", "premium"]] = None
+    subscription_status: Optional[Literal["active", "cancelled", "expired", "suspended"]] = None
 
 
 class UserInDBBase(UserBase):
     id: UUID
     is_active: bool
     is_verified: bool
+    subscription_tier: str
+    subscription_status: str
+    monthly_ai_credits_used: int
+    monthly_job_searches_used: int
+    last_reset_date: datetime
     created_at: datetime
     updated_at: datetime
 
@@ -33,12 +41,31 @@ class UserInDBBase(UserBase):
 
 class User(UserInDBBase):
     """Return to client"""
+    pass
 
 
 class UserInDB(UserInDBBase):
     """Internal use with hashed password"""
-
     hashed_password: str
+
+
+class SubscriptionInfo(BaseModel):
+    tier: Literal["free", "pro", "premium"]
+    status: Literal["active", "cancelled", "expired", "suspended"]
+    ai_credits_used: int
+    ai_credits_limit: int
+    job_searches_used: int
+    job_searches_limit: int
+    days_until_reset: int
+    can_use_ai: bool
+    can_search_jobs: bool
+
+
+class SubscriptionLimits(BaseModel):
+    max_resumes: int
+    monthly_ai_credits: int
+    monthly_job_searches: int
+    job_results_visibility: float  # 0.0 to 1.0 (percentage visible)
 
 
 class TokenPayload(BaseModel):

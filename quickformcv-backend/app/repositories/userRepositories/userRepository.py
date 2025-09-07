@@ -1,12 +1,13 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash
 from app.models.userModels.userModel import User, RefreshToken, UserLoginHistory
+from app.models.userModels.resumeModel import Resume
 from app.schemas.userSchemas.userSchema import UserCreate, UserInDB, UserUpdate
 
 
@@ -24,6 +25,11 @@ class UserRepository:
             username=user_create.username,
             is_active=True,
             is_verified=False,
+            subscription_tier=user_create.subscription_tier,
+            subscription_status="active",
+            monthly_ai_credits_used=0,
+            monthly_job_searches_used=0,
+            last_reset_date=datetime.utcnow()
         )
         self.db.add(db_user)
         self.db.commit()
@@ -75,6 +81,153 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(db_user)
         return db_user
+
+    def update_subscription(self, user_id: UUID, tier: str, status: str = "active") -> Optional[UserInDB]:
+        """
+        Update user's subscription tier and status
+        """
+        db_user = self.get_by_id(user_id)
+        if not db_user:
+            return None
+
+        db_user.subscription_tier = tier
+        db_user.subscription_status = status
+        db_user.updated_at = datetime.now(timezone.utc)
+
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def reset_monthly_usage(self, user_id: UUID) -> Optional[UserInDB]:
+        """
+        Reset monthly usage counters
+        """
+        db_user = self.get_by_id(user_id)
+        if not db_user:
+            return None
+
+        db_user.monthly_ai_credits_used = 0
+        db_user.monthly_job_searches_used = 0
+        db_user.last_reset_date = datetime.utcnow()
+        db_user.updated_at = datetime.now(timezone.utc)
+
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def increment_ai_usage(self, user_id: UUID) -> Optional[UserInDB]:
+        """
+        Increment AI credits used
+        """
+        db_user = self.get_by_id(user_id)
+        if not db_user:
+            return None
+
+        db_user.monthly_ai_credits_used += 1
+        db_user.updated_at = datetime.now(timezone.utc)
+
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def increment_job_search_usage(self, user_id: UUID) -> Optional[UserInDB]:
+        """
+        Increment job searches used
+        """
+        db_user = self.get_by_id(user_id)
+        if not db_user:
+            return None
+
+        db_user.monthly_job_searches_used += 1
+        db_user.updated_at = datetime.now(timezone.utc)
+
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def get_users_by_subscription_tier(self, tier: str) -> List[UserInDB]:
+        """
+        Get all users with a specific subscription tier
+        """
+        return (
+            self.db.query(User)
+            .filter(User.subscription_tier == tier, User.is_active == True)
+            .all()
+        )
+
+    def get_users_needing_reset(self) -> List[UserInDB]:
+        """
+        Get users whose monthly usage should be reset (30+ days since last reset)
+        """
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        return (
+            self.db.query(User)
+            .filter(
+                User.last_reset_date <= thirty_days_ago,
+                User.is_active == True
+            )
+            .all()
+        )
+
+    def get_user_resume_count(self, user_id: UUID) -> int:
+        """
+        Get the count of resumes for a specific user
+        """
+        return self.db.query(func.count(Resume.id)).filter(
+            Resume.user_id == user_id
+        ).scalar() or 0
+
+    def get_user_with_resume_count(self, user_id: UUID) -> Optional[tuple]:
+        """
+        Get user along with their resume count in a single query
+        """
+        result = self.db.query(
+            User,
+            func.count(Resume.id).label('resume_count')
+        ).outerjoin(
+            Resume, User.id == Resume.user_id
+        ).filter(
+            User.id == user_id
+        ).group_by(User.id).first()
+
+        return result if result else None
+
+    def get_users_with_resume_counts(self, skip: int = 0, limit: int = 100) -> List[tuple]:
+        """
+        Get all users with their resume counts
+        """
+        return (
+            self.db.query(
+                User,
+                func.count(Resume.id).label('resume_count')
+            )
+            .outerjoin(Resume, User.id == Resume.user_id)
+            .filter(User.is_active == True)
+            .group_by(User.id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def get_subscription_usage_stats(self, user_id: UUID) -> Optional[dict]:
+        """
+        Get comprehensive subscription usage statistics for a user
+        """
+        user_result = self.get_user_with_resume_count(user_id)
+        if not user_result:
+            return None
+
+        user, resume_count = user_result
+
+        return {
+            "user_id": user.id,
+            "subscription_tier": user.subscription_tier,
+            "subscription_status": user.subscription_status,
+            "resume_count": resume_count,
+            "monthly_ai_credits_used": user.monthly_ai_credits_used,
+            "monthly_job_searches_used": user.monthly_job_searches_used,
+            "last_reset_date": user.last_reset_date
+        }
 
     def deactivate(self, user_id: UUID) -> bool:
         """
@@ -202,6 +355,11 @@ class UserRepository:
             hashed_password="",
             is_active=True,
             is_verified=True,
+            subscription_tier="free",
+            subscription_status="active",
+            monthly_ai_credits_used=0,
+            monthly_job_searches_used=0,
+            last_reset_date=datetime.utcnow()
         )
         self.db.add(db_user)
         self.db.commit()

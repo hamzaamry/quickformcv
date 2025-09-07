@@ -1,6 +1,7 @@
 from uuid import UUID
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.models.userModels.resumeModel import Resume
 from app.schemas.userSchemas.resumeSchema.resume import ResumeCreate
 from app.repositories.userRepositories.ResumeRepositories.CoreResumeRepository import CoreResumeRepository
@@ -30,6 +31,26 @@ class ResumeRepository:
 
     def get_all_by_user(self, user_id: UUID) -> List[Resume]:
         return self.core_repo.get_all_by_user(user_id)
+
+    def get_user_resume_count(self, user_id: UUID) -> int:
+        """Get the total number of resumes for a user"""
+        return self.db.query(func.count(Resume.id)).filter(
+            Resume.user_id == user_id
+        ).scalar() or 0
+
+    def can_create_resume(self, user_id: UUID, max_resumes: int) -> tuple[bool, int]:
+        """
+        Check if user can create another resume based on their limit
+        Returns (can_create, current_count)
+        """
+        current_count = self.get_user_resume_count(user_id)
+
+        # If max_resumes is -1, it means unlimited
+        if max_resumes == -1:
+            return True, current_count
+
+        can_create = current_count < max_resumes
+        return can_create, current_count
 
     def get_pages(self, resume_id: UUID, user_id: UUID) -> Optional[dict]:
         """Get pages configuration for a resume."""

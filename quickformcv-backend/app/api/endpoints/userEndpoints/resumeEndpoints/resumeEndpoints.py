@@ -15,8 +15,8 @@ from app.schemas.userSchemas.resumeSchema.base import PagesUpdate
 from app.services.shared.GroqService import GroqService
 from app.services.userServices.constants import LLM_SUMMARY_SUGGESTION
 from app.services.agent.JobQueryGenerator import JobQueryGenerator
+from app.services.SubscriptionService import SubscriptionService
 
-# Configure Cloudinary
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -29,16 +29,31 @@ router = APIRouter(prefix="/resumes", tags=["resumes"])
 def get_resume_service(db: Session = Depends(get_db)) -> ResumeService:
     return ResumeService(db)
 
+def get_subscription_service(db: Session = Depends(get_db)) -> SubscriptionService:
+    return SubscriptionService(db)
+
 @router.get("/{resume_id}/job-search", response_model=dict)
 async def get_jobs_for_resume(
         resume_id: UUID,
         resume_service: ResumeService = Depends(get_resume_service),
+        subscription_service: SubscriptionService = Depends(get_subscription_service),
         current_user: UserInDB = Depends(get_current_active_user)
 ) -> dict:
     """
     Get job recommendations for a resume
     """
     try:
+        # Check subscription limits first
+        can_search, message = subscription_service.can_search_jobs(current_user.id)
+        if not can_search:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=message
+            )
+
+        # Consume job search credit
+        subscription_service.consume_job_search(current_user.id)
+
         # Get resume data
         resume_data = resume_service.get_complete_resume(resume_id, current_user.id)
         resume_dict = resume_data.model_dump() if hasattr(resume_data, 'model_dump') else dict(resume_data)
@@ -48,14 +63,14 @@ async def get_jobs_for_resume(
         job_generator = JobQueryGenerator(groq_service)
         results = await job_generator.generate_and_search(resume_dict)
 
-        # Extract just the job data
-        job_offers = []
+        # Extract job data
+        all_jobs = []
         for query_key, query_data in results.items():
             query_results = query_data.get('results', {})
             if query_results and 'data' in query_results:
                 jobs = query_results['data']
                 for job in jobs:
-                    job_offers.append({
+                    all_jobs.append({
                         "query_used": query_data.get('query'),
                         "job_title": job.get('job_title'),
                         "employer_name": job.get('employer_name'),
@@ -65,11 +80,28 @@ async def get_jobs_for_resume(
                         "job_posted_at": job.get('job_posted_at_datetime_utc')
                     })
 
+        # Apply subscription-based result limiting
+        total_jobs = len(all_jobs)
+        visible_jobs_count = subscription_service.get_job_results_limit(current_user.id, total_jobs)
+        visible_jobs = all_jobs[:visible_jobs_count]
+
+        # Get subscription info for response
+        subscription_info = subscription_service.get_subscription_info(current_user.id)
+
         return {
-            "total_jobs_found": len(job_offers),
-            "jobs": job_offers
+            "total_jobs_found": total_jobs,
+            "jobs_visible": len(visible_jobs),
+            "jobs": visible_jobs,
+            "subscription_info": {
+                "tier": subscription_info.tier,
+                "job_searches_remaining": max(0, subscription_info.job_searches_limit - subscription_info.job_searches_used) if subscription_info.job_searches_limit != -1 else "unlimited",
+                "results_visibility_percentage": int(subscription_service.get_subscription_limits(subscription_info.tier).job_results_visibility * 100),
+                "upgrade_message": f"Showing {len(visible_jobs)} of {total_jobs} results. Upgrade to see more!" if len(visible_jobs) < total_jobs else None
+            }
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -79,10 +111,22 @@ async def get_jobs_for_resume(
 @router.post("/ai/suggest-summary", response_model=AISuggestionResponse)
 async def suggest_resume_summary(
         request: AISuggestionRequest,
+        subscription_service: SubscriptionService = Depends(get_subscription_service),
         current_user: UserInDB = Depends(get_current_active_user)
 ):
     """Generate AI-powered resume summary suggestions based on resume data."""
     try:
+        # Check AI credits limit
+        can_use, message = subscription_service.can_use_ai_credits(current_user.id)
+        if not can_use:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=message
+            )
+
+        # Consume AI credit
+        subscription_service.consume_ai_credit(current_user.id)
+
         groq_service = GroqService()
         prompt = LLM_SUMMARY_SUGGESTION.format(
             resume_data=str(request.resume_data)
@@ -115,11 +159,17 @@ async def suggest_resume_summary(
 
         cleaned = cleaned.strip(" .,\"'")
 
+        # Get remaining credits for response
+        subscription_info = subscription_service.get_subscription_info(current_user.id)
+
         return AISuggestionResponse(
             success=True,
-            summary_suggestion=cleaned
+            summary_suggestion=cleaned,
+            credits_remaining=max(0, subscription_info.ai_credits_limit - subscription_info.ai_credits_used) if subscription_info.ai_credits_limit != -1 else "unlimited"
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -186,6 +236,7 @@ async def create_resume(
         resume_service: ResumeService = Depends(get_resume_service),
         current_user: UserInDB = Depends(get_current_active_user)
 ) -> ResumeInDB:
+    """Create a new resume - subscription limits are enforced in the service layer"""
     return resume_service.create_resume(resume=resume, user_id=current_user.id)
 
 @router.get("", response_model=List[ResumeInDB])
@@ -194,6 +245,64 @@ async def get_user_resumes(
         current_user: UserInDB = Depends(get_current_active_user)
 ) -> List[ResumeInDB]:
     return resume_service.get_user_resumes(current_user.id)
+
+@router.get("/subscription/info", response_model=dict)
+async def get_subscription_info(
+        subscription_service: SubscriptionService = Depends(get_subscription_service),
+        current_user: UserInDB = Depends(get_current_active_user)
+) -> dict:
+    """Get user's subscription information and usage limits"""
+    try:
+        subscription_info = subscription_service.get_subscription_info(current_user.id)
+        return {
+            "subscription": {
+                "tier": subscription_info.tier,
+                "status": subscription_info.status,
+                "days_until_reset": subscription_info.days_until_reset
+            },
+            "usage": {
+                "ai_credits": {
+                    "used": subscription_info.ai_credits_used,
+                    "limit": subscription_info.ai_credits_limit,
+                    "remaining": max(0, subscription_info.ai_credits_limit - subscription_info.ai_credits_used) if subscription_info.ai_credits_limit != -1 else "unlimited"
+                },
+                "job_searches": {
+                    "used": subscription_info.job_searches_used,
+                    "limit": subscription_info.job_searches_limit,
+                    "remaining": max(0, subscription_info.job_searches_limit - subscription_info.job_searches_used) if subscription_info.job_searches_limit != -1 else "unlimited"
+                },
+                "resumes": {
+                    "used": subscription_info.resumes_count,
+                    "limit": subscription_info.resumes_limit,
+                    "remaining": max(0, subscription_info.resumes_limit - subscription_info.resumes_count) if subscription_info.resumes_limit != -1 else "unlimited"
+                }
+            },
+            "permissions": {
+                "can_use_ai": subscription_info.can_use_ai,
+                "can_search_jobs": subscription_info.can_search_jobs,
+                "can_create_resume": subscription_info.can_create_resume
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get subscription info: {str(e)}"
+        )
+
+@router.get("/subscription/analytics", response_model=dict)
+async def get_usage_analytics(
+        subscription_service: SubscriptionService = Depends(get_subscription_service),
+        current_user: UserInDB = Depends(get_current_active_user)
+) -> dict:
+    """Get detailed usage analytics for the user"""
+    try:
+        analytics = subscription_service.get_usage_analytics(current_user.id)
+        return analytics
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get usage analytics: {str(e)}"
+        )
 
 @router.get("/{resume_id}/pages", response_model=dict)
 async def get_resume_pages(
