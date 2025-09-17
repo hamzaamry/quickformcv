@@ -39,20 +39,21 @@ export default function Languages() {
     addSectionItem,
     updateSectionItem,
     deleteSectionItem,
+    toggleItemVisibility,
   } = useResumeData(resumeId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
   );
 
   const handleDragEnd = (event) => {
@@ -76,6 +77,14 @@ export default function Languages() {
     }
   };
 
+  const handleToggleVisibility = async (id) => {
+    try {
+      await toggleItemVisibility("languages", id);
+    } catch (error) {
+      console.error("Failed to toggle language visibility:", error);
+    }
+  };
+
   const handleSaveLanguage = async (languageData) => {
     if (isEditing && currentLanguage) {
       await updateSectionItem("languages", currentLanguage.id, languageData);
@@ -94,71 +103,73 @@ export default function Languages() {
   };
 
   return (
-    <>
-      <Accordion
-        type="single"
-        defaultValue="languages"
-        collapsible
-        className="w-full"
-      >
-        <AccordionItem value="languages" className="border-none">
-          <AccordionTrigger className="hover:no-underline px-4 py-3">
-            <div className="flex items-center gap-4">
-              <LanguagesIcon className="h-5 w-5" />
-              <h2 className="text-primary-style font-medium text-base">
-                Languages
-              </h2>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="px-4 pb-4 space-y-4">
-              <div className="rounded-lg bg-white shadow-sm overflow-hidden">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                >
-                  <SortableContext
-                    items={languageItems.map((item) => item.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="w-full">
-                      {languageItems.map((item, index) => (
-                        <SortableListItem
-                          key={item.id}
-                          id={item.id}
-                          title={item.language}
-                          description={item.proficiency}
-                          isLast={index === languageItems.length - 1}
-                          onDelete={() => handleDelete(item.id)}
-                          onUpdate={() => handleUpdate(item.id)}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+      <>
+        <Accordion
+            type="single"
+            defaultValue="languages"
+            collapsible
+            className="w-full"
+        >
+          <AccordionItem value="languages" className="border-none">
+            <AccordionTrigger className="hover:no-underline px-4 py-3">
+              <div className="flex items-center gap-4">
+                <LanguagesIcon className="h-5 w-5" />
+                <h2 className="text-primary-style font-medium text-base">
+                  Languages
+                </h2>
               </div>
-              <Button
-                variant="ghost"
-                className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
-                onClick={handleAddNew}
-              >
-                <Plus className="h-4 w-4" />
-                Add new Language
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="px-4 pb-4 space-y-4">
+                <div className="rounded-lg bg-white shadow-sm overflow-hidden">
+                  <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                  >
+                    <SortableContext
+                        items={languageItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                      <div className="w-full">
+                        {languageItems.map((item, index) => (
+                            <SortableListItem
+                                key={item.id}
+                                id={item.id}
+                                title={item.language}
+                                description={item.proficiency}
+                                hidden={item?.hidden || false}
+                                isLast={index === languageItems.length - 1}
+                                onDelete={() => handleDelete(item.id)}
+                                onUpdate={() => handleUpdate(item.id)}
+                                onToggleVisibility={() => handleToggleVisibility(item.id)}
+                            />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                <Button
+                    variant="ghost"
+                    className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
+                    onClick={handleAddNew}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add new Language
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-      <LanguagesDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSave={handleSaveLanguage}
-        initialData={isEditing ? currentLanguage : null}
-        isEditing={isEditing}
-      />
-    </>
+        <LanguagesDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onSave={handleSaveLanguage}
+            initialData={isEditing ? currentLanguage : null}
+            isEditing={isEditing}
+        />
+      </>
   );
 }

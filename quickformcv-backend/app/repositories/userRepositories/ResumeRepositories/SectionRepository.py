@@ -58,6 +58,48 @@ class SectionRepository:
             self.db.commit()
             return new_summary
 
+    def toggle_item_visibility(self, resume_id: UUID, section_type: str, item_id: str) -> Optional[Dict]:
+        """Toggle the hidden status of an item within a section."""
+        try:
+            section = self.get_section_by_type(resume_id, section_type)
+
+            if not section:
+                return None
+
+            section_data = dict(section.section_data)
+            item = self.find_item_by_id(section_data, item_id)
+
+            if not item:
+                return None
+
+            # Toggle the hidden status of the specific item
+            current_hidden = item.get("hidden", False)
+
+            # Update the item in the list
+            for i, existing_item in enumerate(section_data['items']):
+                if existing_item.get('id') == item_id:
+                    section_data['items'][i]['hidden'] = not current_hidden
+                    break
+
+            section.section_data = section_data
+            flag_modified(section, "section_data")
+
+            self.db.commit()
+            self.db.refresh(section)
+
+            return {
+                "id": section.id,
+                "resume_id": section.resume_id,
+                "section_type": section.section_type,
+                "item_id": item_id,
+                "hidden": not current_hidden,
+                "section_data": section.section_data
+            }
+
+        except Exception as e:
+            self.db.rollback()
+            raise
+
     def find_item_by_id(self, section_data: Dict[str, Any], item_id: str) -> Optional[Dict[str, Any]]:
         """Find an item by its ID within a section's data."""
         if 'items' not in section_data:

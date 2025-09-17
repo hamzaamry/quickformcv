@@ -1,6 +1,7 @@
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from typing import Dict, Optional
 
 from app.repositories.userRepositories.ResumeRepositories.resumeRepository import ResumeRepository
 from app.schemas.userSchemas.resumeSchema import ResumeComplete
@@ -31,6 +32,44 @@ class SectionsService:
         except Exception as e:
             logger.error(f"Error updating resume summary: {e}")
             raise
+
+    def toggle_item_visibility(self, resume_id: UUID, user_id: UUID, section_type: str, item_id: str) -> Dict:
+        """
+        Toggle the visibility of an item within a resume section.
+        """
+        try:
+            resume = self.repository.get_by_id(resume_id, user_id)
+            if not resume:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+
+            result = self.repository.toggle_item_visibility(
+                resume_id=resume_id,
+                user_id=user_id,
+                section_type=section_type,
+                item_id=item_id
+            )
+
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Item '{item_id}' not found in section '{section_type}'"
+                )
+
+            return {
+                "success": True,
+                "section_type": section_type,
+                "item_id": item_id,
+                "hidden": result["hidden"]
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error toggling item visibility: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error toggling item visibility: {str(e)}"
+            )
 
     def add_section_item(self, resume_id: UUID, user_id: UUID, section_type: str, item_data: dict) -> None:
         """

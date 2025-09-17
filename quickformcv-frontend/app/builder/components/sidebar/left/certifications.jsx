@@ -39,20 +39,21 @@ export default function Certification() {
     addSectionItem,
     updateSectionItem,
     deleteSectionItem,
+    toggleItemVisibility,
   } = useResumeData(resumeId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentCertification, setCurrentCertification] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
   );
 
   const handleDragEnd = (event) => {
@@ -69,7 +70,7 @@ export default function Certification() {
 
   const handleUpdate = (id) => {
     const certificationToUpdate = certificationItems.find(
-      (item) => item.id === id,
+        (item) => item.id === id,
     );
     if (certificationToUpdate) {
       setCurrentCertification(certificationToUpdate);
@@ -78,12 +79,20 @@ export default function Certification() {
     }
   };
 
+  const handleToggleVisibility = async (id) => {
+    try {
+      await toggleItemVisibility("certifications", id);
+    } catch (error) {
+      console.error("Failed to toggle certification visibility:", error);
+    }
+  };
+
   const handleSaveCertification = async (certificationData) => {
     if (isEditing && currentCertification) {
       await updateSectionItem(
-        "certifications",
-        currentCertification.id,
-        certificationData,
+          "certifications",
+          currentCertification.id,
+          certificationData,
       );
     } else {
       await addSectionItem("certifications", certificationData);
@@ -100,75 +109,77 @@ export default function Certification() {
   };
 
   return (
-    <>
-      <Accordion
-        type="single"
-        defaultValue="certifications"
-        collapsible
-        className="w-full"
-      >
-        <AccordionItem value="certifications" className="border-none">
-          <AccordionTrigger className="hover:no-underline px-4 py-3">
-            <div className="flex items-center gap-4">
-              <FileBadge className="h-5 w-5" />
-              <h2 className="text-primary-style font-medium text-base">
-                Certifications
-              </h2>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="px-4 pb-4 space-y-4">
-              <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                >
-                  <SortableContext
-                    items={certificationItems.map((item) => item.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="w-full">
-                      {certificationItems.map((item, index) => (
-                        <SortableListItem
-                          key={item.id}
-                          id={item.id}
-                          title={item.name || item.title}
-                          description={
-                            item.issuer ||
-                            item.description ||
-                            `${item.month} ${item.year}`
-                          }
-                          isLast={index === certificationItems.length - 1}
-                          onDelete={() => handleDelete(item.id)}
-                          onUpdate={() => handleUpdate(item.id)}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+      <>
+        <Accordion
+            type="single"
+            defaultValue="certifications"
+            collapsible
+            className="w-full"
+        >
+          <AccordionItem value="certifications" className="border-none">
+            <AccordionTrigger className="hover:no-underline px-4 py-3">
+              <div className="flex items-center gap-4">
+                <FileBadge className="h-5 w-5" />
+                <h2 className="text-primary-style font-medium text-base">
+                  Certifications
+                </h2>
               </div>
-              <Button
-                variant="ghost"
-                className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
-                onClick={handleAddNew}
-              >
-                <Plus className="h-4 w-4" />
-                Add new Certification
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="px-4 pb-4 space-y-4">
+                <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+                  <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                  >
+                    <SortableContext
+                        items={certificationItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                      <div className="w-full">
+                        {certificationItems.map((item, index) => (
+                            <SortableListItem
+                                key={item.id}
+                                id={item.id}
+                                title={item.name || item.title}
+                                description={
+                                    item.issuer ||
+                                    item.description ||
+                                    `${item.month} ${item.year}`
+                                }
+                                hidden={item?.hidden || false}
+                                isLast={index === certificationItems.length - 1}
+                                onDelete={() => handleDelete(item.id)}
+                                onUpdate={() => handleUpdate(item.id)}
+                                onToggleVisibility={() => handleToggleVisibility(item.id)}
+                            />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                <Button
+                    variant="ghost"
+                    className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
+                    onClick={handleAddNew}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add new Certification
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-      <CertificationsDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSave={handleSaveCertification}
-        initialData={isEditing ? currentCertification : null}
-        isEditing={isEditing}
-      />
-    </>
+        <CertificationsDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onSave={handleSaveCertification}
+            initialData={isEditing ? currentCertification : null}
+            isEditing={isEditing}
+        />
+      </>
   );
 }

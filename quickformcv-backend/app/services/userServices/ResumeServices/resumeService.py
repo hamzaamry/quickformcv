@@ -57,6 +57,10 @@ class ResumeService:
         self.sections_service.add_or_update_summary(resume_id, user_id, summary_content)
         return self.get_complete_resume(resume_id, user_id)
 
+    def toggle_item_visibility(self, resume_id: UUID, user_id: UUID, section_type: str, item_id: str) -> Dict:
+        result = self.sections_service.toggle_item_visibility(resume_id, user_id, section_type, item_id)
+        return result
+
     def add_section_item(self, resume_id: UUID, user_id: UUID, section_type: str, item_data: dict) -> ResumeComplete:
         self.sections_service.add_section_item(resume_id, user_id, section_type, item_data)
         return self.get_complete_resume(resume_id, user_id)

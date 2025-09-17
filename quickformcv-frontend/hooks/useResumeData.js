@@ -29,41 +29,41 @@ export const useResumeData = (resumeId) => {
 
   // Metadata getters
   const metadata = useMemo(
-    () => resumeData?.metadata || {},
-    [resumeData?.metadata],
+      () => resumeData?.metadata || {},
+      [resumeData?.metadata],
   );
   const pageData = useMemo(() => metadata?.page || {}, [metadata?.page]);
   const themeData = useMemo(() => metadata?.theme || {}, [metadata?.theme]);
   const typographyData = useMemo(
-    () => metadata?.typography || {},
-    [metadata?.typography],
+      () => metadata?.typography || {},
+      [metadata?.typography],
   );
 
   // Template data
   const templateName = metadata?.template || "colorcraft";
   const templateConfig = useMemo(
-    () => getTemplateByName(templateName),
-    [templateName],
+      () => getTemplateByName(templateName),
+      [templateName],
   );
 
   const getSectionData = useCallback(
-    (sectionType) => {
-      const section = resumeData.sections?.find(
-        (s) => s.section_type === sectionType,
-      );
-      return section?.section_data || {};
-    },
-    [resumeData.sections],
+      (sectionType) => {
+        const section = resumeData.sections?.find(
+            (s) => s.section_type === sectionType,
+        );
+        return section?.section_data || {};
+      },
+      [resumeData.sections],
   );
 
   const updateCache = useCallback(
-    (updateFn) => {
-      queryClient.setQueryData(resumeKeys.single(resumeId), (oldData) => {
-        if (!oldData) return oldData;
-        return updateFn(oldData);
-      });
-    },
-    [queryClient, resumeId],
+      (updateFn) => {
+        queryClient.setQueryData(resumeKeys.single(resumeId), (oldData) => {
+          if (!oldData) return oldData;
+          return updateFn(oldData);
+        });
+      },
+      [queryClient, resumeId],
   );
 
   const updateMutation = useMutation({
@@ -79,13 +79,15 @@ export const useResumeData = (resumeId) => {
           return resumeService.addSectionItem(resumeId, sectionType, data);
         case "updateItem":
           return resumeService.updateSectionItem(
-            resumeId,
-            sectionType,
-            itemId,
-            data,
+              resumeId,
+              sectionType,
+              itemId,
+              data,
           );
         case "deleteItem":
           return resumeService.deleteSectionItem(resumeId, sectionType, itemId);
+        case "toggleItemVisibility":
+          return resumeService.toggleItemVisibility(resumeId, sectionType, itemId);
         default:
           throw new Error(`Unknown update type: ${type}`);
       }
@@ -107,179 +109,225 @@ export const useResumeData = (resumeId) => {
   }, []);
 
   const updateMetadata = useCallback(
-    (updates) => {
-      updateCache((oldData) => ({
-        ...oldData,
-        data: {
-          ...oldData.data,
-          metadata: { ...oldData.data.metadata, ...updates },
-        },
-      }));
+      (updates) => {
+        updateCache((oldData) => ({
+          ...oldData,
+          data: {
+            ...oldData.data,
+            metadata: { ...oldData.data.metadata, ...updates },
+          },
+        }));
 
-      const debouncedFn = createDebouncedUpdate(
-        "metadata",
-        (data) => {
-          const currentData = queryClient.getQueryData(
-            resumeKeys.single(resumeId),
-          );
-          const currentMetadata = currentData?.data?.metadata || {};
-          const completeMetadata = { ...currentMetadata, ...data };
-          updateMutation.mutate({ type: "metadata", data: completeMetadata });
-        },
-        800,
-      );
-      debouncedFn(updates);
-    },
-    [updateCache, createDebouncedUpdate, updateMutation, queryClient, resumeId],
+        const debouncedFn = createDebouncedUpdate(
+            "metadata",
+            (data) => {
+              const currentData = queryClient.getQueryData(
+                  resumeKeys.single(resumeId),
+              );
+              const currentMetadata = currentData?.data?.metadata || {};
+              const completeMetadata = { ...currentMetadata, ...data };
+              updateMutation.mutate({ type: "metadata", data: completeMetadata });
+            },
+            800,
+        );
+        debouncedFn(updates);
+      },
+      [updateCache, createDebouncedUpdate, updateMutation, queryClient, resumeId],
   );
 
   const updatePage = useCallback(
-    (pageUpdates) => {
-      updateMetadata({
-        page: { ...pageData, ...pageUpdates },
-      });
-    },
-    [updateMetadata, pageData],
+      (pageUpdates) => {
+        updateMetadata({
+          page: { ...pageData, ...pageUpdates },
+        });
+      },
+      [updateMetadata, pageData],
   );
 
   const updateTheme = useCallback(
-    (themeUpdates) => {
-      updateMetadata({
-        theme: { ...themeData, ...themeUpdates },
-      });
-    },
-    [updateMetadata, themeData],
+      (themeUpdates) => {
+        updateMetadata({
+          theme: { ...themeData, ...themeUpdates },
+        });
+      },
+      [updateMetadata, themeData],
   );
 
   const updateTypography = useCallback(
-    (typographyUpdates) => {
-      updateMetadata({
-        typography: { ...typographyData, ...typographyUpdates },
-      });
-    },
-    [updateMetadata, typographyData],
+      (typographyUpdates) => {
+        updateMetadata({
+          typography: { ...typographyData, ...typographyUpdates },
+        });
+      },
+      [updateMetadata, typographyData],
   );
 
   const changeTemplate = useCallback(
-    async (newTemplateName) => {
-      if (!resumeId || templateName === newTemplateName) return;
+      async (newTemplateName) => {
+        if (!resumeId || templateName === newTemplateName) return;
 
-      try {
-        const template = templates[newTemplateName];
-        if (!template) {
-          throw new Error(`Template "${newTemplateName}" not found`);
+        try {
+          const template = templates[newTemplateName];
+          if (!template) {
+            throw new Error(`Template "${newTemplateName}" not found`);
+          }
+
+          const currentMetadata = metadata || {};
+
+          // Preserve user customizations, only apply template defaults for missing values
+          const newMetadata = {
+            ...template.defaultMetadata,
+            ...currentMetadata,
+            template: newTemplateName,
+            layout: template.defaultMetadata?.layout || [],
+          };
+
+          // Use the synchronous mutation for template changes to ensure immediate update
+          await updateMutation.mutateAsync({
+            type: "metadata",
+            data: newMetadata,
+          });
+        } catch (error) {
+          console.error("Failed to change template:", error);
+          throw error;
         }
-
-        const currentMetadata = metadata || {};
-
-        // Preserve user customizations, only apply template defaults for missing values
-        const newMetadata = {
-          ...template.defaultMetadata,
-          ...currentMetadata,
-          template: newTemplateName,
-          layout: template.defaultMetadata?.layout || [],
-        };
-
-        // Use the synchronous mutation for template changes to ensure immediate update
-        await updateMutation.mutateAsync({
-          type: "metadata",
-          data: newMetadata,
-        });
-      } catch (error) {
-        console.error("Failed to change template:", error);
-        throw error;
-      }
-    },
-    [resumeId, templateName, metadata, updateMutation],
+      },
+      [resumeId, templateName, metadata, updateMutation],
   );
 
   const updateBasics = useCallback(
-    (newBasics) => {
-      updateCache((oldData) => ({
-        ...oldData,
-        data: {
-          ...oldData.data,
-          basics: { ...oldData.data.basics, ...newBasics },
-        },
-      }));
+      (newBasics) => {
+        updateCache((oldData) => ({
+          ...oldData,
+          data: {
+            ...oldData.data,
+            basics: { ...oldData.data.basics, ...newBasics },
+          },
+        }));
 
-      const debouncedFn = createDebouncedUpdate("basics", (updates) => {
-        // Get the current fresh data from React Query cache
-        const currentData = queryClient.getQueryData(
-          resumeKeys.single(resumeId),
-        );
-        const currentBasics = currentData?.data?.basics || {};
-        const completeBasics = { ...currentBasics, ...updates };
-        updateMutation.mutate({ type: "basics", data: completeBasics });
-      });
-      debouncedFn(newBasics);
-    },
-    [updateCache, createDebouncedUpdate, updateMutation, queryClient, resumeId],
+        const debouncedFn = createDebouncedUpdate("basics", (updates) => {
+          // Get the current fresh data from React Query cache
+          const currentData = queryClient.getQueryData(
+              resumeKeys.single(resumeId),
+          );
+          const currentBasics = currentData?.data?.basics || {};
+          const completeBasics = { ...currentBasics, ...updates };
+          updateMutation.mutate({ type: "basics", data: completeBasics });
+        });
+        debouncedFn(newBasics);
+      },
+      [updateCache, createDebouncedUpdate, updateMutation, queryClient, resumeId],
   );
 
   const updateSummary = useCallback(
-    (content) => {
-      updateCache((oldData) => {
-        const sections = oldData.data.sections || [];
-        const updatedSections = sections.map((section) =>
-          section.section_type === "summary"
-            ? { ...section, section_data: { ...section.section_data, content } }
-            : section,
+      (content) => {
+        updateCache((oldData) => {
+          const sections = oldData.data.sections || [];
+          const updatedSections = sections.map((section) =>
+              section.section_type === "summary"
+                  ? { ...section, section_data: { ...section.section_data, content } }
+                  : section,
+          );
+
+          return {
+            ...oldData,
+            data: { ...oldData.data, sections: updatedSections },
+          };
+        });
+
+        const debouncedFn = createDebouncedUpdate(
+            "summary",
+            (data) => updateMutation.mutate({ type: "summary", data }),
+            800,
         );
-
-        return {
-          ...oldData,
-          data: { ...oldData.data, sections: updatedSections },
-        };
-      });
-
-      const debouncedFn = createDebouncedUpdate(
-        "summary",
-        (data) => updateMutation.mutate({ type: "summary", data }),
-        800,
-      );
-      debouncedFn({ content });
-    },
-    [updateCache, createDebouncedUpdate, updateMutation],
+        debouncedFn({ content });
+      },
+      [updateCache, createDebouncedUpdate, updateMutation],
   );
 
   const aiSummaryMutation = useMutation({
     mutationFn: ({ resumeId, resumeData }) =>
-      resumeService.getAISummarySuggestion(resumeId, resumeData),
+        resumeService.getAISummarySuggestion(resumeId, resumeData),
   });
 
   const addSectionItem = useCallback(
-    async (sectionType, itemData) => {
-      return updateMutation.mutateAsync({
-        type: "addItem",
-        sectionType,
-        data: itemData,
-      });
-    },
-    [updateMutation],
+      async (sectionType, itemData) => {
+        return updateMutation.mutateAsync({
+          type: "addItem",
+          sectionType,
+          data: itemData,
+        });
+      },
+      [updateMutation],
   );
 
   const updateSectionItem = useCallback(
-    async (sectionType, itemId, itemData) => {
-      return updateMutation.mutateAsync({
-        type: "updateItem",
-        sectionType,
-        itemId,
-        data: itemData,
-      });
-    },
-    [updateMutation],
+      async (sectionType, itemId, itemData) => {
+        return updateMutation.mutateAsync({
+          type: "updateItem",
+          sectionType,
+          itemId,
+          data: itemData,
+        });
+      },
+      [updateMutation],
   );
 
   const deleteSectionItem = useCallback(
-    async (sectionType, itemId) => {
-      return updateMutation.mutateAsync({
-        type: "deleteItem",
-        sectionType,
-        itemId,
-      });
-    },
-    [updateMutation],
+      async (sectionType, itemId) => {
+        return updateMutation.mutateAsync({
+          type: "deleteItem",
+          sectionType,
+          itemId,
+        });
+      },
+      [updateMutation],
+  );
+
+  const toggleItemVisibility = useCallback(
+      async (sectionType, itemId) => {
+        // Optimistically update the cache
+        updateCache((oldData) => {
+          const sections = oldData.data.sections || [];
+          const updatedSections = sections.map((section) => {
+            if (section.section_type === sectionType) {
+              const items = section.section_data.items || [];
+              const updatedItems = items.map((item) =>
+                  item.id === itemId
+                      ? { ...item, hidden: !item.hidden }
+                      : item,
+              );
+              return {
+                ...section,
+                section_data: {
+                  ...section.section_data,
+                  items: updatedItems,
+                },
+              };
+            }
+            return section;
+          });
+
+          return {
+            ...oldData,
+            data: { ...oldData.data, sections: updatedSections },
+          };
+        });
+
+        // Make the API call
+        try {
+          return await updateMutation.mutateAsync({
+            type: "toggleItemVisibility",
+            sectionType,
+            itemId,
+          });
+        } catch (error) {
+          // Revert the optimistic update on error
+          queryClient.invalidateQueries(resumeKeys.single(resumeId));
+          throw error;
+        }
+      },
+      [updateMutation, updateCache, queryClient, resumeId],
   );
 
   return {
@@ -316,6 +364,7 @@ export const useResumeData = (resumeId) => {
     addSectionItem,
     updateSectionItem,
     deleteSectionItem,
+    toggleItemVisibility,
 
     // Metadata operations
     updateMetadata,
