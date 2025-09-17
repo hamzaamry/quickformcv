@@ -5,10 +5,7 @@ class DatabaseConstants:
         "user_login_history",
         "resumes",
         "resume_sections",
-        "resume_metadata",
-        "conversations",
-        "messages",
-        "scanned_resumes"
+        "resume_metadata"
     }
 
     # Database pool settings
