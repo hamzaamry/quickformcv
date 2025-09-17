@@ -115,3 +115,7 @@ export const parseLocation = (location) => {
   }
   return location || {};
 };
+
+export const filterVisibleItems = (items) => {
+  return items?.filter(item => !item.hidden) || [];
+};

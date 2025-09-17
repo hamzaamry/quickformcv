@@ -32,22 +32,22 @@ import { useParams } from "next/navigation";
 export default function Socials() {
   const params = useParams();
   const resumeId = params?.id;
-  const { socialItems, addSectionItem, updateSectionItem, deleteSectionItem } =
-    useResumeData(resumeId);
+  const { socialItems, addSectionItem, updateSectionItem, deleteSectionItem, toggleItemVisibility } =
+      useResumeData(resumeId);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentSocial, setCurrentSocial] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
   );
 
   const handleDragEnd = (event) => {
@@ -72,6 +72,14 @@ export default function Socials() {
     }
   };
 
+  const handleToggleVisibility = async (id) => {
+    try {
+      await toggleItemVisibility("socials", id);
+    } catch (error) {
+      console.error("Failed to toggle social visibility:", error);
+    }
+  };
+
   const handleSaveNewSocial = async (socialData) => {
     if (isEditing && currentSocial) {
       await updateSectionItem("socials", currentSocial.id, socialData);
@@ -90,69 +98,71 @@ export default function Socials() {
   };
 
   return (
-    <Accordion
-      type="single"
-      defaultValue="socials"
-      collapsible
-      className="w-full"
-    >
-      <AccordionItem value="socials" className="border-none">
-        <AccordionTrigger className="hover:no-underline px-4 py-3">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-4">
-              <Globe className="h-5 w-5" />
-              <h2 className="text-primary-style font-medium text-base">
-                Socials
-              </h2>
+      <Accordion
+          type="single"
+          defaultValue="socials"
+          collapsible
+          className="w-full"
+      >
+        <AccordionItem value="socials" className="border-none">
+          <AccordionTrigger className="hover:no-underline px-4 py-3">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-4">
+                <Globe className="h-5 w-5" />
+                <h2 className="text-primary-style font-medium text-base">
+                  Socials
+                </h2>
+              </div>
             </div>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="px-4 pb-4 space-y-4">
-            <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-              >
-                <SortableContext
-                  items={(socialItems || []).map((item) => item.id)}
-                  strategy={verticalListSortingStrategy}
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-4 pb-4 space-y-4">
+              <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                    modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                 >
-                  {(socialItems || []).map((item, index) => (
-                    <SortableListItem
-                      key={item.id}
-                      id={item.id}
-                      title={item.network}
-                      description={item.url}
-                      isLast={index === socialItems.length - 1}
-                      onDelete={() => handleDelete(item.id)}
-                      onUpdate={() => handleUpdate(item.id)}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+                  <SortableContext
+                      items={(socialItems || []).map((item) => item.id)}
+                      strategy={verticalListSortingStrategy}
+                  >
+                    {(socialItems || []).map((item, index) => (
+                        <SortableListItem
+                            key={item.id}
+                            id={item.id}
+                            title={item.network}
+                            description={item.url}
+                            hidden={item?.hidden || false}
+                            isLast={index === socialItems.length - 1}
+                            onDelete={() => handleDelete(item.id)}
+                            onUpdate={() => handleUpdate(item.id)}
+                            onToggleVisibility={() => handleToggleVisibility(item.id)}
+                        />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+              <Button
+                  variant="ghost"
+                  className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
+                  onClick={handleAddNew}
+              >
+                <Plus className="h-4 w-4" />
+                Add Social Link
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
-              onClick={handleAddNew}
-            >
-              <Plus className="h-4 w-4" />
-              Add Social Link
-            </Button>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+          </AccordionContent>
+        </AccordionItem>
 
-      <AddSocial
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSave={handleSaveNewSocial}
-        initialData={isEditing ? currentSocial : null}
-        isEditing={isEditing}
-      />
-    </Accordion>
+        <AddSocial
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            onSave={handleSaveNewSocial}
+            initialData={isEditing ? currentSocial : null}
+            isEditing={isEditing}
+        />
+      </Accordion>
   );
 }

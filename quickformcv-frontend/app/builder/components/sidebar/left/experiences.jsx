@@ -39,20 +39,21 @@ export default function Experience() {
     addSectionItem,
     updateSectionItem,
     deleteSectionItem,
+    toggleItemVisibility,
   } = useResumeData(resumeId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentExperience, setCurrentExperience] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
   );
 
   const handleDragEnd = (event) => {
@@ -64,7 +65,11 @@ export default function Experience() {
   };
 
   const handleDelete = async (id) => {
-    await deleteSectionItem("experiences", id);
+    try {
+      await deleteSectionItem("experiences", id);
+    } catch (error) {
+      console.error("Failed to delete experience:", error);
+    }
   };
 
   const handleUpdate = (id) => {
@@ -76,19 +81,31 @@ export default function Experience() {
     }
   };
 
-  const handleSaveExperience = async (experienceData) => {
-    if (isEditing && currentExperience) {
-      await updateSectionItem(
-        "experiences",
-        currentExperience.id,
-        experienceData,
-      );
-    } else {
-      await addSectionItem("experiences", experienceData);
+  const handleToggleVisibility = async (id) => {
+    try {
+      await toggleItemVisibility("experiences", id);
+    } catch (error) {
+      console.error("Failed to toggle experience visibility:", error);
     }
-    setIsDialogOpen(false);
-    setIsEditing(false);
-    setCurrentExperience(null);
+  };
+
+  const handleSaveExperience = async (experienceData) => {
+    try {
+      if (isEditing && currentExperience) {
+        await updateSectionItem(
+            "experiences",
+            currentExperience.id,
+            experienceData,
+        );
+      } else {
+        await addSectionItem("experiences", experienceData);
+      }
+      setIsDialogOpen(false);
+      setIsEditing(false);
+      setCurrentExperience(null);
+    } catch (error) {
+      console.error("Failed to save experience:", error);
+    }
   };
 
   const handleAddNew = () => {
@@ -98,77 +115,79 @@ export default function Experience() {
   };
 
   return (
-    <Accordion
-      type="single"
-      defaultValue="experiences"
-      collapsible
-      className="w-full"
-    >
-      <AccordionItem value="experiences" className="border-none">
-        <AccordionTrigger className="hover:no-underline px-4 py-3">
-          <div className="flex items-center gap-4">
-            <BriefcaseBusiness className="h-5 w-5" />
-            <h2 className="text-primary-style font-medium text-base">
-              Experiences
-            </h2>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent>
-          <div className="px-4 pb-4 space-y-4">
-            <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-              >
-                <SortableContext
-                  items={experienceItems.map((item) => item.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="w-full">
-                    {experienceItems.map((item, index) => (
-                      <SortableListItem
-                        key={item.id}
-                        id={item.id}
-                        title={item.title}
-                        description={
-                          item.company ||
-                          item.description ||
-                          `${item.startMonth} ${item.startYear} - ${
-                            item.currentlyWorking
-                              ? "Present"
-                              : `${item.endMonth} ${item.endYear}`
-                          }`
-                        }
-                        isLast={index === experienceItems.length - 1}
-                        onDelete={() => handleDelete(item.id)}
-                        onUpdate={() => handleUpdate(item.id)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+      <Accordion
+          type="single"
+          defaultValue="experiences"
+          collapsible
+          className="w-full"
+      >
+        <AccordionItem value="experiences" className="border-none">
+          <AccordionTrigger className="hover:no-underline px-4 py-3">
+            <div className="flex items-center gap-4">
+              <BriefcaseBusiness className="h-5 w-5" />
+              <h2 className="text-primary-style font-medium text-base">
+                Experiences
+              </h2>
             </div>
-            <Button
-              variant="ghost"
-              className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
-              onClick={handleAddNew}
-            >
-              <Plus className="h-4 w-4" />
-              Add new experience
-            </Button>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="px-4 pb-4 space-y-4">
+              <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                    modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                >
+                  <SortableContext
+                      items={experienceItems.map((item) => item.id)}
+                      strategy={verticalListSortingStrategy}
+                  >
+                    <div className="w-full">
+                      {experienceItems.map((item, index) => (
+                          <SortableListItem
+                              key={item.id}
+                              id={item.id}
+                              title={item.title}
+                              description={
+                                  item.company ||
+                                  item.description ||
+                                  `${item.startMonth} ${item.startYear} - ${
+                                      item.currentlyWorking
+                                          ? "Present"
+                                          : `${item.endMonth} ${item.endYear}`
+                                  }`
+                              }
+                              hidden={item?.hidden || false}
+                              isLast={index === experienceItems.length - 1}
+                              onDelete={() => handleDelete(item.id)}
+                              onUpdate={() => handleUpdate(item.id)}
+                              onToggleVisibility={() => handleToggleVisibility(item.id)}
+                          />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+              <Button
+                  variant="ghost"
+                  className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
+                  onClick={handleAddNew}
+              >
+                <Plus className="h-4 w-4" />
+                Add new experience
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      <AddExperience
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSave={handleSaveExperience}
-        initialData={isEditing ? currentExperience : null}
-        isEditing={isEditing}
-      />
-    </Accordion>
+        <AddExperience
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            onSave={handleSaveExperience}
+            initialData={isEditing ? currentExperience : null}
+            isEditing={isEditing}
+        />
+      </Accordion>
   );
 }

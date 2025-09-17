@@ -39,20 +39,21 @@ export default function Education() {
     addSectionItem,
     updateSectionItem,
     deleteSectionItem,
+    toggleItemVisibility,
   } = useResumeData(resumeId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentEducation, setCurrentEducation] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+      useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+      }),
+      useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+      }),
   );
 
   const handleDragEnd = (event) => {
@@ -76,6 +77,14 @@ export default function Education() {
     }
   };
 
+  const handleToggleVisibility = async (id) => {
+    try {
+      await toggleItemVisibility("education", id);
+    } catch (error) {
+      console.error("Failed to toggle education visibility:", error);
+    }
+  };
+
   const handleSaveEducation = async (educationData) => {
     if (isEditing && currentEducation) {
       await updateSectionItem("education", currentEducation.id, educationData);
@@ -94,79 +103,81 @@ export default function Education() {
   };
 
   return (
-    <>
-      <Accordion
-        type="single"
-        defaultValue="education"
-        collapsible
-        className="w-full"
-      >
-        <AccordionItem value="education" className="border-none">
-          <AccordionTrigger className="hover:no-underline px-4 py-3">
-            <div className="flex items-center gap-4">
-              <GraduationCap className="h-5 w-5" />
-              <h2 className="text-primary-style font-medium text-base">
-                Education
-              </h2>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="px-4 pb-4 space-y-4">
-              <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                >
-                  <SortableContext
-                    items={educationItems.map((item) => item.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="w-full">
-                      {educationItems.map((item, index) => (
-                        <SortableListItem
-                          key={item.id}
-                          id={item.id}
-                          title={item.institution}
-                          description={
-                            item.fieldOfStudy ||
-                            item.description ||
-                            `${item.startMonth} ${item.startYear} - ${
-                              item.currentlyStudying
-                                ? "Present"
-                                : `${item.endMonth} ${item.endYear}`
-                            }`
-                          }
-                          isLast={index === educationItems.length - 1}
-                          onDelete={() => handleDelete(item.id)}
-                          onUpdate={() => handleUpdate(item.id)}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
+      <>
+        <Accordion
+            type="single"
+            defaultValue="education"
+            collapsible
+            className="w-full"
+        >
+          <AccordionItem value="education" className="border-none">
+            <AccordionTrigger className="hover:no-underline px-4 py-3">
+              <div className="flex items-center gap-4">
+                <GraduationCap className="h-5 w-5" />
+                <h2 className="text-primary-style font-medium text-base">
+                  Education
+                </h2>
               </div>
-              <Button
-                variant="ghost"
-                className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
-                onClick={handleAddNew}
-              >
-                <Plus className="h-4 w-4" />
-                Add new Education
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="px-4 pb-4 space-y-4">
+                <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+                  <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                  >
+                    <SortableContext
+                        items={educationItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                      <div className="w-full">
+                        {educationItems.map((item, index) => (
+                            <SortableListItem
+                                key={item.id}
+                                id={item.id}
+                                title={item.institution}
+                                description={
+                                    item.fieldOfStudy ||
+                                    item.description ||
+                                    `${item.startMonth} ${item.startYear} - ${
+                                        item.currentlyStudying
+                                            ? "Present"
+                                            : `${item.endMonth} ${item.endYear}`
+                                    }`
+                                }
+                                hidden={item?.hidden || false}
+                                isLast={index === educationItems.length - 1}
+                                onDelete={() => handleDelete(item.id)}
+                                onUpdate={() => handleUpdate(item.id)}
+                                onToggleVisibility={() => handleToggleVisibility(item.id)}
+                            />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                <Button
+                    variant="ghost"
+                    className="h-10 flex items-center justify-start gap-2 text-[#6B6B6B]"
+                    onClick={handleAddNew}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add new Education
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
-      <AddEducation
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSave={handleSaveEducation}
-        initialData={isEditing ? currentEducation : null}
-        isEditing={isEditing}
-      />
-    </>
+        <AddEducation
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            onSave={handleSaveEducation}
+            initialData={isEditing ? currentEducation : null}
+            isEditing={isEditing}
+        />
+      </>
   );
 }

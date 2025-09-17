@@ -260,6 +260,24 @@ async def update_resume_pages(
         pages=pages_update.model_dump()
     )
 
+@router.patch("/{resume_id}/sections/{section_type}/items/{item_id}/toggle-visibility", response_model=dict)
+async def toggle_item_visibility(
+        resume_id: UUID,
+        section_type: str,
+        item_id: str,
+        resume_service: ResumeService = Depends(get_resume_service),
+        current_user: UserInDB = Depends(get_current_active_user)
+) -> dict:
+    """
+    Toggle the visibility of an item within a resume section.
+    """
+    return resume_service.toggle_item_visibility(
+        resume_id=resume_id,
+        user_id=current_user.id,
+        section_type=section_type,
+        item_id=item_id
+    )
+
 @router.delete("/{resume_id}/sections/{section_type}/items/{item_id}", response_model=ResumeComplete)
 async def delete_section_item(
         resume_id: UUID,

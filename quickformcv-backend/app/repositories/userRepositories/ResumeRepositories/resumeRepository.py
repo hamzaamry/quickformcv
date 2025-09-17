@@ -49,6 +49,13 @@ class ResumeRepository:
         self.section_repo.add_or_update_summary_section(resume_id, summary_content)
         return self.get_complete_resume(resume_id, user_id)
 
+    def toggle_item_visibility(self, resume_id: UUID, user_id: UUID, section_type: str, item_id: str) -> Optional[Dict]:
+        """Toggle the visibility of an item within a section."""
+        resume = self.get_by_id(resume_id, user_id)
+        if not resume:
+            return None
+        return self.section_repo.toggle_item_visibility(resume_id, section_type, item_id)
+
     def add_section_item(self, resume_id: UUID, user_id: UUID, section_type: str, item_data: dict) -> Optional[Dict]:
         resume = self.get_by_id(resume_id, user_id)
         if not resume:
