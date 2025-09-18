@@ -1,35 +1,57 @@
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import Link from "next/link";
+import { trackCTAClick, trackSocialProofClick } from "@/utils/analytics";
 
 export const FinalCTA = () => {
+  const handleMainCTAClick = () => {
+    trackCTAClick('final_cta', 'Start building now - It\'s free!');
+  };
+
+  const handleSocialProofClick = () => {
+    trackSocialProofClick('user_count', 'final_cta');
+  };
+
+  const handleUrgencyClick = () => {
+    trackSocialProofClick('urgency_message', 'final_cta');
+  };
+
   return (
-    <div className="bg-blue-600">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Ready to build your professional resume?
-          </h2>
-          <p className="mt-4 text-lg text-blue-100">
-            Join thousands of job seekers who are already using QuickForm CV.
-            <strong> Free during beta - no credit card required.</strong>
-          </p>
-          <div className="mt-8">
-            <Link href="/auth/signup">
-              <Button
-                size="lg"
-                className="bg-white text-blue-600 hover:bg-gray-50 px-8"
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                Start building now - It's free!
-              </Button>
-            </Link>
+      <div className="bg-blue-600">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Ready to build your professional resume?
+            </h2>
+            <p className="mt-4 text-lg text-blue-100">
+            <span
+                className="cursor-pointer hover:text-white transition-colors"
+                onClick={handleSocialProofClick}
+            >
+              Join thousands of job seekers who are already using QuickForm CV.
+            </span>
+              <strong> Free during beta - no credit card required.</strong>
+            </p>
+            <div className="mt-8">
+              <Link href="/auth/signup">
+                <Button
+                    size="lg"
+                    className="bg-white text-blue-600 hover:bg-gray-50 px-8"
+                    onClick={handleMainCTAClick}
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  Start building now - It's free!
+                </Button>
+              </Link>
+            </div>
+            <p
+                className="mt-4 text-sm text-blue-200 cursor-pointer hover:text-white transition-colors"
+                onClick={handleUrgencyClick}
+            >
+              ⏰ Beta access is limited. Secure your free account today.
+            </p>
           </div>
-          <p className="mt-4 text-sm text-blue-200">
-            ⏰ Beta access is limited. Secure your free account today.
-          </p>
         </div>
       </div>
-    </div>
   );
 };

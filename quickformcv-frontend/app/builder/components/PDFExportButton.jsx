@@ -17,18 +17,19 @@ export const PDFExportButton = ({ resumeData }) => {
   const isDisabled = isExporting || !resumeData?.metadata;
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleExport}
-      disabled={isDisabled}
-    >
-      {isExporting ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        <Download className="w-4 h-4" />
-      )}
-      {isExporting ? "Generating PDF..." : "Export as PDF"}
-    </Button>
+      <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={isDisabled}
+          data-testid="pdf-export-button"
+      >
+        {isExporting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+            <Download className="w-4 h-4" />
+        )}
+        {isExporting ? "Generating PDF..." : "Export as PDF"}
+      </Button>
   );
 };
