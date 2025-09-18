@@ -11,8 +11,6 @@ export const exportResumeToPDF = async (resumeData) => {
       : process.env.NEXT_PUBLIC_APP_URL;
 
   const previewUrl = `${baseUrl}/builder/print-preview/${resumeData.id}`;
-  console.log("PDF Service - Target URL:", previewUrl);
-  console.log("PDF Service - Environment:", { isDocker, NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL });
 
   let browser = null;
   try {
@@ -59,21 +57,12 @@ export const exportResumeToPDF = async (resumeData) => {
     console.log("PDF Service - Injecting resume data...");
     await page.evaluateOnNewDocument((data) => {
       window.__RESUME_DATA__ = data;
-      console.log('Resume data injected:', !!data);
     }, resumeData);
-
-    console.log("PDF Service - Navigating to:", previewUrl);
 
     try {
       const response = await page.goto(previewUrl, {
         waitUntil: "networkidle0",
         timeout: 45000,
-      });
-
-      console.log("PDF Service - Navigation response:", {
-        status: response?.status(),
-        ok: response?.ok(),
-        url: response?.url()
       });
 
       if (!response || !response.ok()) {
@@ -85,7 +74,6 @@ export const exportResumeToPDF = async (resumeData) => {
       // Try alternative approach: check if it's a network issue
       try {
         const alternativeUrl = previewUrl.replace('localhost', '127.0.0.1');
-        console.log("PDF Service - Trying alternative URL:", alternativeUrl);
 
         const altResponse = await page.goto(alternativeUrl, {
           waitUntil: "networkidle0",
@@ -93,19 +81,11 @@ export const exportResumeToPDF = async (resumeData) => {
         });
 
         if (!altResponse || !altResponse.ok()) {
-          throw navigationError; // Re-throw original error
+          throw navigationError;
         }
       } catch {
-        throw navigationError; // Re-throw original error
+        throw navigationError;
       }
-    }
-
-    console.log("PDF Service - Waiting for resume page selector...");
-
-    const pageContent = await page.content();
-    if (pageContent.length < 1000) {
-      console.error("PDF Service - Page seems empty, content length:", pageContent.length);
-      console.error("PDF Service - Page content preview:", pageContent.substring(0, 500));
     }
 
     await page.waitForSelector("[data-resume-page]", {
@@ -120,7 +100,6 @@ export const exportResumeToPDF = async (resumeData) => {
     await page.waitForFunction(
         (expectedCount) => {
           const pageElements = document.querySelectorAll("[data-resume-page]");
-          console.log('Current page elements found:', pageElements.length);
           return pageElements.length >= expectedCount;
         },
         { timeout: 45000 },
@@ -132,14 +111,12 @@ export const exportResumeToPDF = async (resumeData) => {
           (expectedCount) => {
             const pageElements = document.querySelectorAll("[data-resume-page]");
             if (pageElements.length < expectedCount) {
-              console.log('Not enough page elements:', pageElements.length, 'expected:', expectedCount);
               return false;
             }
             const checkCount = Math.min(expectedCount, 3);
             for (let i = 0; i < checkCount; i++) {
               const element = pageElements[i];
               if (!element) {
-                console.log('Page element', i, 'does not exist');
                 return false;
               }
 
@@ -148,36 +125,16 @@ export const exportResumeToPDF = async (resumeData) => {
                   element.children.length > 0; // Has child elements
 
               if (!hasContent) {
-                console.log('Page element', i, 'failed content check:', {
-                  height: element?.offsetHeight,
-                  textLength: element?.textContent?.trim()?.length,
-                  childCount: element?.children?.length
-                });
                 return false;
               }
             }
-            console.log('All page elements passed content check');
             return true;
           },
           { timeout: 20000 },
           expectedPageCount,
       );
     } catch (contentValidationError) {
-      console.log('Content validation failed, but proceeding anyway:', contentValidationError.message);
 
-      const debugInfo = await page.evaluate(() => {
-        const elements = document.querySelectorAll("[data-resume-page]");
-        return Array.from(elements).map((el, i) => ({
-          index: i,
-          height: el.offsetHeight,
-          width: el.offsetWidth,
-          textLength: el.textContent?.trim().length || 0,
-          childCount: el.children.length,
-          hasClass: el.className
-        }));
-      });
-
-      console.log('Current page elements state:', JSON.stringify(debugInfo, null, 2));
       // Continue anyway if we have the basic elements
       const elementCount = await page.evaluate(() =>
           document.querySelectorAll("[data-resume-page]").length
@@ -188,8 +145,6 @@ export const exportResumeToPDF = async (resumeData) => {
       }
     }
 
-    console.log("PDF Service - Content validation passed");
-    console.log("PDF Service - Waiting for final rendering...");
     await new Promise((resolve) => setTimeout(resolve, 5000));
     console.log("PDF Service - Generating PDF...");
     const pdfOptions = {

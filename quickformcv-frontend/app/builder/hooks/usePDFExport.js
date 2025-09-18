@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackResumeDownload, trackResumeDownloadError } from "@/utils/analytics";
 
 export const usePDFExport = () => {
   const [isExporting, setIsExporting] = useState(false);
@@ -8,6 +9,8 @@ export const usePDFExport = () => {
 
   const exportToPDF = async (resumeData) => {
     setIsExporting(true);
+    setError(null);
+
     try {
       const response = await fetch(`/api/export/pdf/${resumeData.id}`, {
         method: "POST",
@@ -27,6 +30,8 @@ export const usePDFExport = () => {
         throw new Error("Generated PDF is empty");
       }
 
+      trackResumeDownload(resumeData.id, 'PDF', pdfBlob.size);
+
       // Download the PDF
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement("a");
@@ -40,6 +45,12 @@ export const usePDFExport = () => {
       return true;
     } catch (err) {
       console.error("PDF export error:", err);
+      setError(err.message);
+
+      if (resumeData.id) {
+        trackResumeDownloadError(resumeData.id, 'PDF', err);
+      }
+
       return false;
     } finally {
       setIsExporting(false);
@@ -48,12 +59,22 @@ export const usePDFExport = () => {
 
   const openPrintPreview = (resumeData) => {
     try {
-      const previewUrl = `/builder/print-preview/${resumeData.id}`;
+      const previewUrl = `/builder/print-preview/${resumeData?.id}`;
       window.open(previewUrl, "_blank");
+
+      if (resumeData.id) {
+        trackResumeDownload(resumeData.id, 'PRINT_PREVIEW');
+      }
+
       return true;
     } catch (err) {
       console.error("Print preview error:", err);
       setError(err.message);
+
+      if (resumeData.id) {
+        trackResumeDownloadError(resumeData.id, 'PRINT_PREVIEW', err);
+      }
+
       return false;
     }
   };
