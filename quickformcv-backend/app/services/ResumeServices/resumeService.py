@@ -2,10 +2,10 @@ from typing import List, Dict
 from uuid import UUID
 from sqlalchemy.orm import Session
 
-from app.schemas.userSchemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Basics
-from app.services.userServices.ResumeServices.CoreResumeService import CoreResumeService
-from app.services.userServices.ResumeServices.MetadataService import MetadataService
-from app.services.userServices.ResumeServices.SectionsService import SectionsService
+from app.schemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Basics
+from app.services.ResumeServices.CoreResumeService import CoreResumeService
+from app.services.ResumeServices.MetadataService import MetadataService
+from app.services.ResumeServices.SectionsService import SectionsService
 
 class ResumeService:
     """

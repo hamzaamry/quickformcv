@@ -1,11 +1,10 @@
 import os
-import time
 from typing import Dict, Optional, Union
-
 from dotenv import load_dotenv
-from groq import AsyncGroq, Groq  # Import both AsyncGroq and regular Groq
+from groq import AsyncGroq, Groq
 
 from app.utils import logger
+from app.services.constants import AI_MODEL, AI_TEMPERATURE, AI_MAX_TOKENS, AI_DEFAULT_ROLE
 
 load_dotenv()
 
@@ -16,16 +15,16 @@ class GroqService:
         if not self.api_key:
             raise ValueError("GROQ API key is not set.")
         self.async_client = AsyncGroq(api_key=self.api_key)
-        self.sync_client = Groq(api_key=self.api_key)  # Add a synchronous client
+        self.sync_client = Groq(api_key=self.api_key)
 
     async def get_AI_response(self, query: str) -> Optional[Union[Dict, str]]:
         """Sends a GROQ query and retrieves the response asynchronously."""
         try:
             chat_completion = await self.async_client.chat.completions.create(
-                messages=[{"role": "user", "content": query}],
-                model="llama3-8b-8192",
-                temperature=0.25,
-                max_tokens=4096,
+                messages=[{"role": AI_DEFAULT_ROLE, "content": query}],
+                model=AI_MODEL,
+                temperature=AI_TEMPERATURE,
+                max_tokens=AI_MAX_TOKENS,
             )
             response = chat_completion.choices[0].message.content.strip()
             return response
@@ -37,12 +36,11 @@ class GroqService:
     def get_AI_response_sync(self, query: str) -> Optional[Union[Dict, str]]:
         """Sends a GROQ query and retrieves the response synchronously."""
         try:
-            # Use the synchronous client
             chat_completion = self.sync_client.chat.completions.create(
-                messages=[{"role": "user", "content": query}],
-                model="llama3-8b-8192",
-                temperature=0.25,
-                max_tokens=4096,
+                messages=[{"role": AI_DEFAULT_ROLE, "content": query}],
+                model=AI_MODEL,
+                temperature=AI_TEMPERATURE,
+                max_tokens=AI_MAX_TOKENS,
             )
             response = chat_completion.choices[0].message.content.strip()
             return response

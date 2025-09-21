@@ -3,8 +3,8 @@ from typing import Dict
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.repositories.userRepositories.ResumeRepositories.resumeRepository import ResumeRepository
-from app.schemas.userSchemas.resumeSchema import ResumeInDB, Basics
+from app.repositories.ResumeRepositories.resumeRepository import ResumeRepository
+from app.schemas.resumeSchema import ResumeInDB, Basics
 
 class MetadataService:
     def __init__(self, db: Session):

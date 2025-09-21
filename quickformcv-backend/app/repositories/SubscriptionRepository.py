@@ -2,11 +2,11 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
-from sqlalchemy import func, and_, or_, text
+from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import Session
 
-from app.models.userModels.userModel import User
-from app.models.userModels.resumeModel import Resume
+from app.models.userModel import User
+from app.models.resumeModel import Resume
 
 
 class SubscriptionRepository:

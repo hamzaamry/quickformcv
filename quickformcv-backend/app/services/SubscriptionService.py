@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.repositories.userRepositories.userRepository import UserRepository
-from app.repositories.userRepositories.ResumeRepositories import ResumeRepository
-from app.schemas.userSchemas.userSchema import SubscriptionInfo, SubscriptionLimits
+from app.repositories.userRepository import UserRepository
+from app.repositories.ResumeRepositories import ResumeRepository
+from app.schemas.userSchema import SubscriptionInfo, SubscriptionLimits
 
 
 class SubscriptionService:
@@ -16,7 +16,7 @@ class SubscriptionService:
             max_resumes=3,
             monthly_ai_credits=3,
             monthly_job_searches=3,
-            job_results_visibility=0.3  # Only first 30% of results visible
+            job_results_visibility=0.1  # Only first 10% of results visible
         ),
         "pro": SubscriptionLimits(
             max_resumes=-1,  # Unlimited

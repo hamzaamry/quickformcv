@@ -1,10 +1,10 @@
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict, Optional
+from typing import Dict
 
-from app.repositories.userRepositories.ResumeRepositories.resumeRepository import ResumeRepository
-from app.schemas.userSchemas.resumeSchema import ResumeComplete
+from app.repositories.ResumeRepositories.resumeRepository import ResumeRepository
+from app.schemas.resumeSchema import ResumeComplete
 from app.utils.logging_config import logger
 
 class SectionsService:

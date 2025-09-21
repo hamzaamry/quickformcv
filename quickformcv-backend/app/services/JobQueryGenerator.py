@@ -1,7 +1,7 @@
 import json
 import http.client
 from typing import List, Dict, Optional
-from app.services.shared.GroqService import GroqService
+from app.services.GroqService import GroqService
 
 class JobQueryGenerator:
     def __init__(self, groq_service: GroqService):

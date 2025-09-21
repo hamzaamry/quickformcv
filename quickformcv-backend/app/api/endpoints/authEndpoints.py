@@ -1,21 +1,17 @@
-import os
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-from datetime import timedelta
 from sqlalchemy.orm import Session
 from uuid import UUID
 from pydantic import BaseModel
-from typing import Optional
 import requests
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from uuid import uuid4
 
-from ....Database import get_db
-from ....core.auth import get_current_active_user
-from ....core.security import *
-from ....repositories.userRepositories.userRepository import UserRepository
-from ....schemas.userSchemas.userSchema import Token, User, UserInDB
+from app.Database import get_db
+from app.core.auth import get_current_active_user
+from app.core.security import *
+from app.repositories.userRepository import UserRepository
+from app.schemas.userSchema import Token, User, UserInDB
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v0/auth/login")
 

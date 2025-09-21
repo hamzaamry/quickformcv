@@ -2,11 +2,11 @@ from uuid import UUID
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.userModels.resumeModel import Resume
-from app.schemas.userSchemas.resumeSchema.resume import ResumeCreate
-from app.repositories.userRepositories.ResumeRepositories.CoreResumeRepository import CoreResumeRepository
-from app.repositories.userRepositories.ResumeRepositories.SectionRepository import SectionRepository
-from app.repositories.userRepositories.ResumeRepositories.MetadataRepository import MetadataRepository
+from app.models.resumeModel import Resume
+from app.schemas.resumeSchema.resume import ResumeCreate
+from app.repositories.ResumeRepositories.CoreResumeRepository import CoreResumeRepository
+from app.repositories.ResumeRepositories.SectionRepository import SectionRepository
+from app.repositories.ResumeRepositories.MetadataRepository import MetadataRepository
 
 class ResumeRepository:
     def __init__(self, db: Session):

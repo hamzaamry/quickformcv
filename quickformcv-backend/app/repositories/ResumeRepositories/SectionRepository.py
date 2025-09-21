@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from app.models.userModels.resumeModel import ResumeSection
+from app.models.resumeModel import ResumeSection
 from sqlalchemy.orm.attributes import flag_modified
 
 

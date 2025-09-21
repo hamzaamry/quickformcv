@@ -3,12 +3,12 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.repositories.userRepositories.ResumeRepositories.resumeRepository import ResumeRepository
-from app.schemas.userSchemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Metadata
-from app.schemas.userSchemas.resumeSchema.base import Pages
+from app.repositories.ResumeRepositories.resumeRepository import ResumeRepository
+from app.schemas.resumeSchema import ResumeCreate, ResumeInDB, ResumeComplete, Metadata
+from app.schemas.resumeSchema.base import Pages
 from app.utils.logging_config import logger
-from app.services.userServices.utils.ServicesUtils import parse_basics_data, transform_sections
-from app.services.userServices.constants import DEFAULT_RESUME_SECTIONS
+from app.services.utils.ServicesUtils import parse_basics_data, transform_sections
+from app.services.constants import DEFAULT_RESUME_SECTIONS
 from app.services.SubscriptionService import SubscriptionService
 
 class CoreResumeService:

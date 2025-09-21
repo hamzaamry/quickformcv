@@ -1,8 +1,8 @@
 from uuid import UUID
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
-from app.models.userModels.resumeModel import Resume, ResumeMetadata
-from app.schemas.userSchemas.resumeSchema.resume import ResumeCreate
+from app.models.resumeModel import Resume, ResumeMetadata
+from app.schemas.resumeSchema.resume import ResumeCreate
 
 class CoreResumeRepository:
     def __init__(self, db: Session):

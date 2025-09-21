@@ -1,14 +1,14 @@
 from uuid import UUID
 
-from app.schemas.userSchemas.resumeSchema.sections import SummarySection, CustomSection, ItemsSection
-from app.schemas.userSchemas.resumeSchema.resume import ResumeSection
+from app.schemas.resumeSchema import SummarySection, CustomSection, ItemsSection
+from app.schemas.resumeSchema.resume import ResumeSection
 from app.utils.logging_config import logger
 
 def parse_basics_data(basics_data, resume_id: UUID):
     """
     Parse the basics data from the resume.
     """
-    from app.schemas.userSchemas.resumeSchema.basics import Basics
+    from app.schemas.resumeSchema.basics import Basics
 
     if not basics_data:
         return Basics()

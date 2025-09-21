@@ -1,9 +1,3 @@
-JSON_EXTRACTION_PATTERNS = [
-    r'```json\n(.*?)```',
-    r'```\n(.*?)```',
-    r'\{.*?\}',
-]
-
 DEFAULT_RESUME_SECTIONS = [
     {
         "section_type": "summary",
@@ -85,3 +79,8 @@ Resume Data:
 
 Now write the summary:
 """
+
+AI_MODEL = "llama-3.1-8b-instant"
+AI_TEMPERATURE = 0.25
+AI_MAX_TOKENS = 4096
+AI_DEFAULT_ROLE = "user"

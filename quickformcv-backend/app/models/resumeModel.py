@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Uuid
 from sqlalchemy.dialects.postgresql import JSONB
-from ..base import Base
+from app.models.base import Base
 
 class Resume(Base):
     __tablename__ = "resumes"

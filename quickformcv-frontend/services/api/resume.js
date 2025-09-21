@@ -23,7 +23,6 @@ export const resumeService = {
       api.delete(`/resumes/${resumeId}/sections/${sectionType}/items/${itemId}`),
   toggleItemVisibility: (resumeId, sectionType, itemId) =>
       api.patch(`/resumes/${resumeId}/sections/${sectionType}/items/${itemId}/toggle-visibility`),
-
   uploadImage: (file) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -35,8 +34,8 @@ export const resumeService = {
     });
   },
   getAISummarySuggestion: (resumeId, resumeData) =>
-    api.post(`/resumes/ai/suggest-summary`, { resume_data: resumeData }),
+    api.post(`/ai/suggest-summary`, { resume_data: resumeData }),
 
   getJobRecommendations: (resumeId) =>
-      api.get(`/resumes/${resumeId}/job-search`),
+      api.get(`/jobs/${resumeId}`),
 };

@@ -6,10 +6,9 @@ from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash
-from app.models.userModels.userModel import User, RefreshToken, UserLoginHistory
-from app.models.userModels.resumeModel import Resume
-from app.schemas.userSchemas.userSchema import UserCreate, UserInDB, UserUpdate
-
+from app.models.userModel import User, RefreshToken, UserLoginHistory
+from app.models.resumeModel import Resume
+from app.schemas.userSchema import UserCreate, UserInDB, UserUpdate
 
 class UserRepository:
     def __init__(self, db: Session):

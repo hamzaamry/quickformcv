@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Uuid
 
-from ..base import Base
+from app.models.base import Base
 
 
 class User(Base):

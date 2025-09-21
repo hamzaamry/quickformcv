@@ -1,8 +1,8 @@
 from uuid import UUID
 from typing import Optional
 from sqlalchemy.orm import Session
-from app.models.userModels.resumeModel import ResumeMetadata
-from app.schemas.userSchemas.resumeSchema.metadata import Metadata
+from app.models.resumeModel import ResumeMetadata
+from app.schemas.resumeSchema.metadata import Metadata
 
 class MetadataRepository:
     def __init__(self, db: Session):
