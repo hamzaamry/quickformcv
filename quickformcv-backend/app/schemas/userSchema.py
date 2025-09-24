@@ -56,9 +56,12 @@ class SubscriptionInfo(BaseModel):
     ai_credits_limit: int
     job_searches_used: int
     job_searches_limit: int
+    resumes_count: int
+    resumes_limit: int
     days_until_reset: int
     can_use_ai: bool
     can_search_jobs: bool
+    can_create_resume: bool
 
 
 class SubscriptionLimits(BaseModel):

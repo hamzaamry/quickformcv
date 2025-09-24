@@ -21,15 +21,7 @@ async def suggest_resume_summary(
 ):
     """Generate AI-powered resume summary suggestions based on resume data."""
     try:
-        # Check AI credits limit
-        can_use, message = subscription_service.can_use_ai_credits(current_user.id)
-        if not can_use:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=message
-            )
-
-        # Consume AI credit
+        # Check and consume AI credit (throws HTTPException if not allowed)
         subscription_service.consume_ai_credit(current_user.id)
 
         groq_service = GroqService()
@@ -37,7 +29,7 @@ async def suggest_resume_summary(
             resume_data=str(request.resume_data)
         )
         ai_response = await groq_service.get_AI_response(prompt)
-        print("ai response :", ai_response)
+
         if not ai_response:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -65,13 +57,14 @@ async def suggest_resume_summary(
 
         cleaned = cleaned.strip(" .,\"'")
 
-        # Get remaining credits for response
-        subscription_info = subscription_service.get_subscription_info(current_user.id)
+        # Get updated subscription status
+        subscription_status = subscription_service.get_subscription_status(current_user.id)
+        usage = subscription_status["usage"]["ai_credits"]
 
         return AISuggestionResponse(
             success=True,
             summary_suggestion=cleaned,
-            credits_remaining=max(0, subscription_info.ai_credits_limit - subscription_info.ai_credits_used) if subscription_info.ai_credits_limit != -1 else "unlimited"
+            credits_remaining=usage["remaining"]
         )
 
     except HTTPException:
@@ -90,19 +83,10 @@ async def suggest_experience_description(
 ):
     """Generate AI-powered work experience descriptions based on job title and company."""
     try:
-        # Check AI credits limit
-        can_use, message = subscription_service.can_use_ai_credits(current_user.id)
-        if not can_use:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=message
-            )
-
-        # Consume AI credit
+        # Check and consume AI credit (throws HTTPException if not allowed)
         subscription_service.consume_ai_credit(current_user.id)
 
         groq_service = GroqService()
-        # You'll need to add this constant to your constants file
         prompt = f"""
         Based on the following job information, generate 3-4 professional bullet points describing key responsibilities and achievements:
         
@@ -121,13 +105,14 @@ async def suggest_experience_description(
 
         cleaned = ai_response.strip()
 
-        # Get remaining credits for response
-        subscription_info = subscription_service.get_subscription_info(current_user.id)
+        # Get updated subscription status
+        subscription_status = subscription_service.get_subscription_status(current_user.id)
+        usage = subscription_status["usage"]["ai_credits"]
 
         return AISuggestionResponse(
             success=True,
             summary_suggestion=cleaned,
-            credits_remaining=max(0, subscription_info.ai_credits_limit - subscription_info.ai_credits_used) if subscription_info.ai_credits_limit != -1 else "unlimited"
+            credits_remaining=usage["remaining"]
         )
 
     except HTTPException:

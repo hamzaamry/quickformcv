@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.repositories.userRepository import UserRepository
 from app.repositories.ResumeRepositories import ResumeRepository
-from app.schemas.userSchema import SubscriptionInfo, SubscriptionLimits
+from app.schemas.userSchema import SubscriptionLimits
 
 
 class SubscriptionService:
@@ -37,8 +37,8 @@ class SubscriptionService:
         self.resume_repo = ResumeRepository(db)
         self.db = db
 
-    def get_subscription_info(self, user_id: UUID) -> SubscriptionInfo:
-        """Get comprehensive subscription information for a user"""
+    def get_subscription_status(self, user_id: UUID) -> dict:
+        """Get complete subscription status with usage, limits, and permissions"""
         user = self.user_repo.get_by_id(user_id)
         if not user:
             raise HTTPException(
@@ -46,155 +46,84 @@ class SubscriptionService:
                 detail="User not found"
             )
 
-        # Reset usage if month has passed
+        # Reset usage if needed
         self._reset_monthly_usage_if_needed(user)
 
         limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
         resume_count = self.resume_repo.get_user_resume_count(user_id)
 
-        # Calculate days until reset
+        # Calculate remaining days
         next_reset = user.last_reset_date + timedelta(days=30)
         days_until_reset = max(0, (next_reset - datetime.utcnow()).days)
 
-        return SubscriptionInfo(
-            tier=user.subscription_tier,
-            status=user.subscription_status,
-            ai_credits_used=user.monthly_ai_credits_used,
-            ai_credits_limit=limits.monthly_ai_credits,
-            job_searches_used=user.monthly_job_searches_used,
-            job_searches_limit=limits.monthly_job_searches,
-            resumes_count=resume_count,
-            resumes_limit=limits.max_resumes,
-            days_until_reset=days_until_reset,
-            can_use_ai=self._can_use_ai_credits(user),
-            can_search_jobs=self._can_search_jobs(user),
-            can_create_resume=self._can_create_resume(user, resume_count)
-        )
-
-    def get_subscription_limits(self, subscription_tier: str) -> SubscriptionLimits:
-        """Get limits for a subscription tier"""
-        return self.SUBSCRIPTION_LIMITS.get(subscription_tier, self.SUBSCRIPTION_LIMITS["free"])
-
-    def can_create_resume(self, user_id: UUID) -> tuple[bool, str]:
-        """Check if user can create another resume"""
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return False, "User not found"
-
-        limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-        current_resume_count = self.resume_repo.get_user_resume_count(user_id)
-
-        if limits.max_resumes == -1:  # Unlimited
-            return True, ""
-
-        if current_resume_count >= limits.max_resumes:
-            return False, f"Resume limit reached ({current_resume_count}/{limits.max_resumes}). Upgrade to create more."
-
-        return True, ""
-
-    def can_use_ai_credits(self, user_id: UUID) -> tuple[bool, str]:
-        """Check if user can use AI credits"""
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return False, "User not found"
-
-        self._reset_monthly_usage_if_needed(user)
-
-        if not self._can_use_ai_credits(user):
-            limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-            if limits.monthly_ai_credits == -1:
-                return True, ""
-            return False, f"Monthly AI credit limit reached ({user.monthly_ai_credits_used}/{limits.monthly_ai_credits}). Upgrade for more credits."
-
-        return True, ""
-
-    def can_search_jobs(self, user_id: UUID) -> tuple[bool, str]:
-        """Check if user can perform job searches"""
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return False, "User not found"
-
-        self._reset_monthly_usage_if_needed(user)
-
-        if not self._can_search_jobs(user):
-            limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-            if limits.monthly_job_searches == -1:
-                return True, ""
-            return False, f"Monthly job search limit reached ({user.monthly_job_searches_used}/{limits.monthly_job_searches}). Upgrade for more searches."
-
-        return True, ""
+        return {
+            "subscription": {
+                "tier": user.subscription_tier,
+                "status": user.subscription_status,
+                "days_until_reset": days_until_reset
+            },
+            "usage": self._build_usage_data(user, limits, resume_count),
+            "permissions": self._build_permissions(user, limits, resume_count),
+            "warnings": self._build_warnings(user, limits, resume_count)
+        }
 
     def consume_ai_credit(self, user_id: UUID) -> bool:
-        """Consume an AI credit for the user"""
-        can_use, message = self.can_use_ai_credits(user_id)
-        if not can_use:
+        """Consume an AI credit with validation"""
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        self._reset_monthly_usage_if_needed(user)
+
+        if not self._can_use_resource(user, "ai_credits"):
+            limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=message
+                detail=f"AI credit limit reached ({user.monthly_ai_credits_used}/{limits.monthly_ai_credits})"
             )
 
-        user = self.user_repo.get_by_id(user_id)
         user.monthly_ai_credits_used += 1
         self.db.commit()
         return True
 
     def consume_job_search(self, user_id: UUID) -> bool:
-        """Consume a job search for the user"""
-        can_use, message = self.can_search_jobs(user_id)
-        if not can_use:
+        """Consume a job search with validation"""
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        self._reset_monthly_usage_if_needed(user)
+
+        if not self._can_use_resource(user, "job_searches"):
+            limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=message
+                detail=f"Job search limit reached ({user.monthly_job_searches_used}/{limits.monthly_job_searches})"
             )
 
-        user = self.user_repo.get_by_id(user_id)
         user.monthly_job_searches_used += 1
         self.db.commit()
         return True
 
-    def upgrade_subscription(self, user_id: UUID, new_tier: str) -> bool:
-        """Upgrade user subscription"""
-        if new_tier not in self.SUBSCRIPTION_LIMITS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid subscription tier"
-            )
-
+    def validate_resume_creation(self, user_id: UUID) -> bool:
+        """Validate if user can create a resume"""
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            return False
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        user.subscription_tier = new_tier
-        user.subscription_status = "active"
-        self.db.commit()
-        return True
-
-    def downgrade_subscription(self, user_id: UUID, new_tier: str) -> tuple[bool, str]:
-        """
-        Downgrade user subscription with validation
-        Returns (success, message)
-        """
-        if new_tier not in self.SUBSCRIPTION_LIMITS:
-            return False, "Invalid subscription tier"
-
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return False, "User not found"
-
-        new_limits = self.SUBSCRIPTION_LIMITS[new_tier]
+        limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
         resume_count = self.resume_repo.get_user_resume_count(user_id)
 
-        # Check if downgrade is possible
-        if new_limits.max_resumes != -1 and resume_count > new_limits.max_resumes:
-            return False, f"Cannot downgrade: You have {resume_count} resumes but {new_tier} tier allows only {new_limits.max_resumes}. Please delete some resumes first."
+        if not self._can_use_resource(user, "resumes", resume_count):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Resume limit reached ({resume_count}/{limits.max_resumes})"
+            )
 
-        user.subscription_tier = new_tier
-        user.subscription_status = "active"
-        self.db.commit()
-        return True, f"Successfully downgraded to {new_tier} tier"
+        return True
 
     def get_job_results_limit(self, user_id: UUID, total_results: int) -> int:
-        """Get the number of job results user can see based on their subscription"""
+        """Get visible job results based on subscription"""
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return 0
@@ -205,116 +134,80 @@ class SubscriptionService:
 
         return int(total_results * limits.job_results_visibility)
 
-    def get_usage_analytics(self, user_id: UUID) -> dict:
-        """Get detailed usage analytics for a user"""
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            return {}
-
-        limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-        resume_count = self.resume_repo.get_user_resume_count(user_id)
-
-        # Calculate usage percentages
-        ai_usage_percent = 0
-        job_search_usage_percent = 0
-        resume_usage_percent = 0
-
-        if limits.monthly_ai_credits != -1:
-            ai_usage_percent = min(100, (user.monthly_ai_credits_used / limits.monthly_ai_credits) * 100)
-
-        if limits.monthly_job_searches != -1:
-            job_search_usage_percent = min(100, (user.monthly_job_searches_used / limits.monthly_job_searches) * 100)
-
-        if limits.max_resumes != -1:
-            resume_usage_percent = min(100, (resume_count / limits.max_resumes) * 100)
-
-        next_reset = user.last_reset_date + timedelta(days=30)
-        days_until_reset = max(0, (next_reset - datetime.utcnow()).days)
-
+    def _build_usage_data(self, user, limits, resume_count: int) -> dict:
+        """Build usage data structure"""
         return {
-            "subscription_tier": user.subscription_tier,
-            "subscription_status": user.subscription_status,
-            "usage": {
-                "ai_credits": {
-                    "used": user.monthly_ai_credits_used,
-                    "limit": limits.monthly_ai_credits,
-                    "percentage": ai_usage_percent,
-                    "unlimited": limits.monthly_ai_credits == -1
-                },
-                "job_searches": {
-                    "used": user.monthly_job_searches_used,
-                    "limit": limits.monthly_job_searches,
-                    "percentage": job_search_usage_percent,
-                    "unlimited": limits.monthly_job_searches == -1
-                },
-                "resumes": {
-                    "used": resume_count,
-                    "limit": limits.max_resumes,
-                    "percentage": resume_usage_percent,
-                    "unlimited": limits.max_resumes == -1
-                }
+            "ai_credits": {
+                "used": user.monthly_ai_credits_used,
+                "limit": limits.monthly_ai_credits,
+                "remaining": self._calculate_remaining(user.monthly_ai_credits_used, limits.monthly_ai_credits),
+                "unlimited": limits.monthly_ai_credits == -1
             },
-            "reset_info": {
-                "last_reset": user.last_reset_date,
-                "next_reset": next_reset,
-                "days_until_reset": days_until_reset
+            "job_searches": {
+                "used": user.monthly_job_searches_used,
+                "limit": limits.monthly_job_searches,
+                "remaining": self._calculate_remaining(user.monthly_job_searches_used, limits.monthly_job_searches),
+                "unlimited": limits.monthly_job_searches == -1
             },
-            "job_results_visibility": limits.job_results_visibility
+            "resumes": {
+                "used": resume_count,
+                "limit": limits.max_resumes,
+                "remaining": self._calculate_remaining(resume_count, limits.max_resumes),
+                "unlimited": limits.max_resumes == -1
+            }
         }
 
-    def bulk_reset_monthly_usage(self) -> int:
-        """Reset monthly usage for all users who need it (batch operation)"""
-        users_needing_reset = self.user_repo.get_users_needing_reset()
-        reset_count = 0
+    def _build_permissions(self, user, limits, resume_count: int) -> dict:
+        """Build permissions structure"""
+        return {
+            "can_use_ai": self._can_use_resource(user, "ai_credits"),
+            "can_search_jobs": self._can_use_resource(user, "job_searches"),
+            "can_create_resume": self._can_use_resource(user, "resumes", resume_count)
+        }
 
-        for user in users_needing_reset:
-            self._reset_monthly_usage_if_needed(user)
-            reset_count += 1
+    def _build_warnings(self, user, limits, resume_count: int) -> dict:
+        """Build warning flags for approaching limits"""
+        warnings = {}
 
-        return reset_count
+        if limits.monthly_ai_credits != -1:
+            usage_percent = (user.monthly_ai_credits_used / limits.monthly_ai_credits) * 100
+            warnings["ai_credits"] = usage_percent >= 80
 
-    def get_subscription_tier_stats(self) -> dict:
-        """Get statistics about subscription tiers across all users"""
-        stats = {}
+        if limits.monthly_job_searches != -1:
+            usage_percent = (user.monthly_job_searches_used / limits.monthly_job_searches) * 100
+            warnings["job_searches"] = usage_percent >= 80
 
-        for tier in self.SUBSCRIPTION_LIMITS.keys():
-            users = self.user_repo.get_users_by_subscription_tier(tier)
-            stats[tier] = {
-                "user_count": len(users),
-                "limits": self.SUBSCRIPTION_LIMITS[tier].__dict__
-            }
+        if limits.max_resumes != -1:
+            usage_percent = (resume_count / limits.max_resumes) * 100
+            warnings["resumes"] = usage_percent >= 90
 
-        return stats
+        return warnings
 
-    def _can_use_ai_credits(self, user) -> bool:
-        """Check if user can use AI credits"""
+    def _can_use_resource(self, user, resource_type: str, current_count: int = None) -> bool:
+        """Unified resource usage validation"""
         if user.subscription_status != "active":
             return False
 
         limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-        return limits.monthly_ai_credits == -1 or user.monthly_ai_credits_used < limits.monthly_ai_credits
 
-    def _can_search_jobs(self, user) -> bool:
-        """Check if user can search jobs"""
-        if user.subscription_status != "active":
-            return False
+        if resource_type == "ai_credits":
+            return limits.monthly_ai_credits == -1 or user.monthly_ai_credits_used < limits.monthly_ai_credits
+        elif resource_type == "job_searches":
+            return limits.monthly_job_searches == -1 or user.monthly_job_searches_used < limits.monthly_job_searches
+        elif resource_type == "resumes":
+            return limits.max_resumes == -1 or (current_count is not None and current_count < limits.max_resumes)
 
-        limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-        return limits.monthly_job_searches == -1 or user.monthly_job_searches_used < limits.monthly_job_searches
+        return False
 
-    def _can_create_resume(self, user, resume_count: int) -> bool:
-        """Check if user can create more resumes"""
-        if user.subscription_status != "active":
-            return False
-
-        limits = self.SUBSCRIPTION_LIMITS[user.subscription_tier]
-        return limits.max_resumes == -1 or resume_count < limits.max_resumes
+    def _calculate_remaining(self, used: int, limit: int) -> str | int:
+        """Calculate remaining usage"""
+        if limit == -1:
+            return "unlimited"
+        return max(0, limit - used)
 
     def _reset_monthly_usage_if_needed(self, user) -> None:
-        """Reset monthly usage counters if a month has passed"""
+        """Reset monthly usage if needed"""
         now = datetime.utcnow()
-
-        # Check if 30 days have passed since last reset
         if (now - user.last_reset_date).days >= 30:
             user.monthly_ai_credits_used = 0
             user.monthly_job_searches_used = 0

@@ -30,15 +30,7 @@ async def get_jobs_for_resume(
     Get job recommendations for a resume
     """
     try:
-        # Check subscription limits first
-        can_search, message = subscription_service.can_search_jobs(current_user.id)
-        if not can_search:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=message
-            )
-
-        # Consume job search credit
+        # Check and consume job search (throws HTTPException if not allowed)
         subscription_service.consume_job_search(current_user.id)
 
         # Get resume data
@@ -72,17 +64,18 @@ async def get_jobs_for_resume(
         visible_jobs_count = subscription_service.get_job_results_limit(current_user.id, total_jobs)
         visible_jobs = all_jobs[:visible_jobs_count]
 
-        # Get subscription info for response
-        subscription_info = subscription_service.get_subscription_info(current_user.id)
+        # Get updated subscription status
+        subscription_status = subscription_service.get_subscription_status(current_user.id)
+        usage = subscription_status["usage"]["job_searches"]
 
         return {
             "total_jobs_found": total_jobs,
             "jobs_visible": len(visible_jobs),
             "jobs": visible_jobs,
             "subscription_info": {
-                "tier": subscription_info.tier,
-                "job_searches_remaining": max(0, subscription_info.job_searches_limit - subscription_info.job_searches_used) if subscription_info.job_searches_limit != -1 else "unlimited",
-                "results_visibility_percentage": int(subscription_service.get_subscription_limits(subscription_info.tier).job_results_visibility * 100),
+                "tier": subscription_status["subscription"]["tier"],
+                "job_searches_remaining": usage["remaining"],
+                "results_visibility_percentage": int(subscription_status["usage"]["job_searches"].get("visibility", 1.0) * 100),
                 "upgrade_message": f"Showing {len(visible_jobs)} of {total_jobs} results. Upgrade to see more!" if len(visible_jobs) < total_jobs else None
             }
         }

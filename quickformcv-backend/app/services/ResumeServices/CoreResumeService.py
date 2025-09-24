@@ -19,13 +19,7 @@ class CoreResumeService:
     def create_resume(self, resume: ResumeCreate, user_id: UUID) -> ResumeInDB:
         """Create a new resume with default values after checking subscription limits."""
         try:
-            # Check if user can create another resume
-            can_create, message = self.subscription_service.can_create_resume(user_id)
-            if not can_create:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=message
-                )
+            self.subscription_service.validate_resume_creation(user_id)
 
             new_resume = self.repository.create(user_id=user_id, resume_create=resume)
             self.repository.create_initial_sections(resume_id=new_resume.id, sections=DEFAULT_RESUME_SECTIONS)
