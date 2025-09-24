@@ -8,15 +8,30 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Crown, Zap, CheckCircle, Star } from "lucide-react";
+import { Crown, Zap, CheckCircle, Star, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }) {
+    const router = useRouter();
+
     // Focus on the most relevant benefits for someone who hit the resume limit
     const keyBenefits = [
         "Unlimited resume creation",
         "Unlimited AI suggestions",
         "Enhanced job search results"
     ];
+
+    const handleUpgradeClick = () => {
+        // Close dialog and redirect to pricing page using Next.js router
+        onOpenChange(false);
+        router.push('/pricing');
+    };
+
+    const handlePlanClick = (planHref) => {
+        // Close dialog and redirect to specific plan signup
+        onOpenChange(false);
+        router.push(planHref);
+    };
 
     const plans = [
         {
@@ -26,7 +41,7 @@ export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }
             description: "Perfect for active job seekers",
             icon: Star,
             popular: true,
-            href: "/auth/signup?plan=pro"
+            href: "/pricing"
         },
         {
             name: "Premium",
@@ -35,7 +50,7 @@ export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }
             description: "For power users and professionals",
             icon: Crown,
             popular: false,
-            href: "/auth/signup?plan=premium"
+            href: "/pricing"
         }
     ];
 
@@ -79,12 +94,12 @@ export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }
                         {plans.map((plan) => (
                             <div
                                 key={plan.name}
+                                onClick={() => handlePlanClick(plan.href)}
                                 className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
                                     plan.popular
                                         ? "border-blue-500 bg-blue-50"
                                         : "border-gray-200 hover:border-gray-300"
                                 }`}
-                                onClick={() => window.location.href = plan.href}
                             >
                                 {plan.popular && (
                                     <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
@@ -114,10 +129,11 @@ export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }
                     <Button
                         size="lg"
                         className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                        onClick={() => window.location.href = plans[0].href}
+                        onClick={handleUpgradeClick}
                     >
                         <Crown className="h-5 w-5 mr-2" />
-                        Start with Pro Plan
+                        View All Plans & Features
+                        <ArrowRight className="h-5 w-5 ml-2" />
                     </Button>
                     <Button
                         variant="outline"

@@ -12,7 +12,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { UserAvatar } from "@/components/shared/userAvatar";
+import { UserProfile } from "@/components/shared/userProfile";
 import { PDFExportButton } from "@/app/builder/components/PDFExportButton";
 import CompletenessNotification  from "@/app/builder/components/shared/CompletenessNotification"
 import { useResume } from "@/hooks/useResume";
@@ -80,9 +80,9 @@ export function TopBar({ completenessData }) {
                   {/* Completeness Notification */}
                   {completenessData && (
                       <CompletenessNotification
-                          completionPercentage={completenessData.completionPercentage}
-                          missingFields={completenessData.missingFields}
-                          isJobSearchReady={completenessData.isJobSearchReady}
+                          completionPercentage={completenessData?.completionPercentage}
+                          missingFields={completenessData?.missingFields}
+                          isJobSearchReady={completenessData?.isJobSearchReady}
                       />
                   )}
 
@@ -91,7 +91,7 @@ export function TopBar({ completenessData }) {
                     <PDFExportButton resumeData={data?.data} />
                   </div>
                   <div className="relative">
-                    <UserAvatar />
+                    <UserProfile showUserInfo={false} />
                     <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow-sm" />
                   </div>
                 </>
