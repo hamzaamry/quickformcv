@@ -15,7 +15,6 @@ export default function BuilderLayout({ children }) {
   const [isRightSidebarCollapsed, setIsRightSidebarCollapsed] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
-  const [showOnHover, setShowOnHover] = useState(false)
 
   const params = useParams()
   const resumeId = params?.id
