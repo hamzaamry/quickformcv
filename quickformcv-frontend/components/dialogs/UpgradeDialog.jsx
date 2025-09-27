@@ -7,80 +7,59 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { PLANS, LIMIT_CONFIGS, ICON_MAP } from "@/components/constants";
 import { Button } from "@/components/ui/button";
-import { Crown, Zap, CheckCircle, Star, ArrowRight } from "lucide-react";
+import { Crown, Zap, CheckCircle, ArrowRight, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }) {
+export function UpgradeDialog({
+                                  open,
+                                  onOpenChange,
+                                  currentLimit,
+                                  currentUsage,
+                                  limitType
+                              }) {
     const router = useRouter();
 
-    // Focus on the most relevant benefits for someone who hit the resume limit
-    const keyBenefits = [
-        "Unlimited resume creation",
-        "Unlimited AI suggestions",
-        "Enhanced job search results"
-    ];
+    const config = LIMIT_CONFIGS[limitType];
+    const IconComponent = ICON_MAP[config.icon] || FileText;
 
     const handleUpgradeClick = () => {
-        // Close dialog and redirect to pricing page using Next.js router
         onOpenChange(false);
         router.push('/pricing');
     };
 
     const handlePlanClick = (planHref) => {
-        // Close dialog and redirect to specific plan signup
         onOpenChange(false);
         router.push(planHref);
     };
-
-    const plans = [
-        {
-            name: "Pro",
-            price: "$9.99",
-            period: "month",
-            description: "Perfect for active job seekers",
-            icon: Star,
-            popular: true,
-            href: "/pricing"
-        },
-        {
-            name: "Premium",
-            price: "$19.99",
-            period: "month",
-            description: "For power users and professionals",
-            icon: Crown,
-            popular: false,
-            href: "/pricing"
-        }
-    ];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                     <div className="flex items-center justify-center mb-4">
-                        <div className="bg-amber-100 p-3 rounded-full">
-                            <Crown className="h-8 w-8 text-amber-600" />
+                        <div className={`${config.iconBg} p-3 rounded-full`}>
+                            <IconComponent className={`h-8 w-8 ${config.iconColor}`} />
                         </div>
                     </div>
                     <DialogTitle className="text-center text-2xl font-semibold">
-                        Resume Limit Reached
+                        {config.title}
                     </DialogTitle>
                     <DialogDescription className="text-center text-base">
-                        You've created {currentUsage} out of {currentLimit} free resumes.
-                        Upgrade to create unlimited resumes and unlock premium features.
+                        {config.getDescription(currentUsage, currentLimit)}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
-                    {/* Key Benefits - focused on solving their immediate problem */}
+                    {/* Key Benefits */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
                             <Zap className="h-4 w-4" />
                             What you'll get instantly:
                         </h3>
                         <ul className="space-y-2">
-                            {keyBenefits.map((benefit, index) => (
+                            {config.benefits.map((benefit, index) => (
                                 <li key={index} className="flex items-start gap-2 text-sm text-blue-800">
                                     <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                                     <span>{benefit}</span>
@@ -91,7 +70,7 @@ export function UpgradeDialog({ open, onOpenChange, currentLimit, currentUsage }
 
                     {/* Quick Plan Selection */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {plans.map((plan) => (
+                        {PLANS.map((plan) => (
                             <div
                                 key={plan.name}
                                 onClick={() => handlePlanClick(plan.href)}

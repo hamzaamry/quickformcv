@@ -8,56 +8,49 @@ import {
 } from "@/components/ui/dialog";
 import SearchingAnimation from './SearchingAnimation';
 import JobResultsView from './JobResultsView';
-import PaywallModal from './PaywallModal';
+import { useLimitHandler } from '@/hooks/useLimitHandler';
 import { useResumeData } from '@/hooks/useResumeData';
+import { LIMIT_TYPES } from "@/components/constants";
 
 const JobSearchModal = ({ onClose, resumeData }) => {
     const [searchStage, setSearchStage] = useState('idle');
-    const [showPaywall, setShowPaywall] = useState(false);
     const [open, setOpen] = useState(true);
     const [jobResults, setJobResults] = useState(null);
-    const [searchError, setSearchError] = useState(null);
 
-    // Get the resume ID from resumeData
     const resumeId = resumeData?.id;
-
-    // Use the hook to get search functionality
     const { searchJobs, isJobSearchLoading } = useResumeData(resumeId);
+    const { handleLimitError, UpgradeDialogComponent } = useLimitHandler();
 
     const startJobSearch = async () => {
         if (!resumeId) {
-            setSearchError('Resume ID not found');
             return;
         }
 
         setSearchStage('searching');
-        setSearchError(null);
 
         try {
             const response = await searchJobs();
             const data = response?.data;
 
-            if (data && data.jobs) {
-                // Transform the real job data to match our component structure
-                const transformedJobs = data.jobs.slice(0, 8).map((job, index) => ({
+            if (data?.jobs) {
+                const transformedJobs = data?.jobs.slice(0, 8).map((job, index) => ({
                     id: index + 1,
-                    title: job.job_title || 'Job Title Not Available',
-                    company: job.employer_name || 'Company Name Not Available',
-                    location: job.job_location || 'Location Not Specified',
-                    salary: 'Salary not disclosed', // Backend doesn't provide salary
-                    postedHours: job.job_posted_at ? formatTimeAgo(job.job_posted_at) : 'Recently',
-                    match: Math.floor(Math.random() * 20) + 80, // Generate random match score 80-99
-                    description: job.job_description ?
-                        job.job_description.substring(0, 150) + '...' :
+                    title: job?.job_title || 'Job Title Not Available',
+                    company: job?.employer_name || 'Company Name Not Available',
+                    location: job?.job_location || 'Location Not Specified',
+                    salary: 'Salary not disclosed',
+                    postedHours: job?.job_posted_at ? formatTimeAgo(job?.job_posted_at) : 'Recently',
+                    match: Math.floor(Math.random() * 20) + 80,
+                    description: job?.job_description ?
+                        job?.job_description.substring(0, 150) + '...' :
                         'Job description not available',
-                    requirements: extractRequirements(job.job_description || ''),
                     logo: getRandomLogo(),
-                    applyLink: job.job_apply_link,
-                    queryUsed: job.query_used
+                    applyLink: job?.job_apply_link,
+                    queryUsed: job?.query_used
                 }));
 
                 setJobResults({
-                    totalJobs: data.total_jobs_found,
+                    totalJobs: data?.total_jobs_found,
                     jobs: transformedJobs
                 });
                 setSearchStage('results');
@@ -65,13 +58,15 @@ const JobSearchModal = ({ onClose, resumeData }) => {
                 throw new Error('No jobs found in response');
             }
         } catch (error) {
-            console.error('Job search error:', error);
-            setSearchError(error.message || 'Failed to search for jobs. Please try again.');
+            if (handleLimitError(error, LIMIT_TYPES.JOB_SEARCH)) {
+                // Close the main modal when showing upgrade dialog
+                setOpen(false);
+                return;
+            }
             setSearchStage('error');
         }
     };
 
-    // Helper functions
     const formatTimeAgo = (dateString) => {
         try {
             const date = new Date(dateString);
@@ -89,15 +84,6 @@ const JobSearchModal = ({ onClose, resumeData }) => {
         }
     };
 
-    const extractRequirements = (description) => {
-        // Simple keyword extraction for requirements
-        const keywords = ['React', 'JavaScript', 'Python', 'Node.js', 'TypeScript', 'AWS', 'Docker', 'MongoDB', 'CSS', 'HTML', 'SQL', 'Git', 'Figma', 'Vue', 'Angular'];
-        const foundKeywords = keywords.filter(keyword =>
-            description.toLowerCase().includes(keyword.toLowerCase())
-        );
-        return foundKeywords.slice(0, 5); // Limit to 5 requirements
-    };
-
     const getRandomLogo = () => {
         const logos = ['🚀', '💡', '🎨', '☁️', '⚡', '🔧', '💻', '🌟'];
         return logos[Math.floor(Math.random() * logos.length)];
@@ -110,9 +96,12 @@ const JobSearchModal = ({ onClose, resumeData }) => {
 
     const handleJobClick = (jobId) => {
         if (jobId > 2) {
-            setShowPaywall(true);
+            setOpen(false);
+            handleLimitError(
+                { response: { data: { detail: 'Job search limit reached' } } },
+                LIMIT_TYPES.JOB_SEARCH
+            );
         } else {
-            // Open the actual apply link for free jobs
             const job = jobResults?.jobs?.find(j => j.id === jobId);
             if (job?.applyLink) {
                 window.open(job.applyLink, '_blank');
@@ -128,7 +117,6 @@ const JobSearchModal = ({ onClose, resumeData }) => {
     };
 
     const retrySearch = () => {
-        setSearchError(null);
         setSearchStage('idle');
     };
 
@@ -136,11 +124,9 @@ const JobSearchModal = ({ onClose, resumeData }) => {
         <>
             <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] p-0 overflow-hidden [&>button]:hidden">
-                    {/* Background gradient effects */}
                     <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
                     <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
-                    {/* Header */}
                     <DialogHeader className="px-6 py-6 border-b border-gray-200 relative z-10">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -157,7 +143,6 @@ const JobSearchModal = ({ onClose, resumeData }) => {
                                     </p>
                                 </div>
                             </div>
-                            {/* Close button */}
                             <button
                                 onClick={handleClose}
                                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
@@ -168,7 +153,6 @@ const JobSearchModal = ({ onClose, resumeData }) => {
                         </div>
                     </DialogHeader>
 
-                    {/* Content */}
                     <div className="flex-1 overflow-y-auto px-6 py-6 relative z-10 max-h-[calc(90vh-120px)]">
                         {searchStage === 'idle' && (
                             <div className="flex flex-col items-center justify-center space-y-6 py-16 min-h-[400px]">
@@ -212,9 +196,6 @@ const JobSearchModal = ({ onClose, resumeData }) => {
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">
                                         Search Failed
                                     </h3>
-                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                                        {searchError}
-                                    </p>
                                     <button
                                         onClick={retrySearch}
                                         className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors duration-200"
@@ -235,8 +216,7 @@ const JobSearchModal = ({ onClose, resumeData }) => {
                 </DialogContent>
             </Dialog>
 
-            {/* Paywall Modal */}
-            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
+            <UpgradeDialogComponent />
         </>
     );
 };

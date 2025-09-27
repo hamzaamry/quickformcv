@@ -12,17 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useCreateResume } from "@/hooks/useResume";
-import { UpgradeDialog } from "@/components/Dialogs/UpgradeDialog";
+import { useLimitHandler } from "@/hooks/useLimitHandler";
+import { LIMIT_TYPES } from "@/components/constants";
 
 export function CreateResumeDialog({ open, onOpenChange }) {
   const [formData, setFormData] = useState({
     title: "",
     jobDescription: "",
   });
-  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
-  const [limitInfo, setLimitInfo] = useState({ current: 0, limit: 0 });
 
   const { mutate: createResume, isPending } = useCreateResume();
+  const { handleLimitError, UpgradeDialogComponent } = useLimitHandler();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -36,30 +36,10 @@ export function CreateResumeDialog({ open, onOpenChange }) {
         setFormData({ title: "", jobDescription: "" });
       },
       onError: (error) => {
-
-        const errorDetail = error.response?.data?.detail;
-        const isLimitError = errorDetail && errorDetail.includes("limit reached");
-
-        if (isLimitError) {
-          const match = errorDetail.match(/limit reached \((\d+)\/(\d+)\)/);
-
-          if (match) {
-            setLimitInfo({
-              current: parseInt(match[1]),
-              limit: parseInt(match[2])
-            });
-          } else {
-            setLimitInfo({
-              current: 0,
-              limit: 0
-            });
-          }
-
+        if (handleLimitError(error, LIMIT_TYPES.RESUME)) {
           onOpenChange(false);
           setFormData({ title: "", jobDescription: "" });
-          setUpgradeDialogOpen(true);
-        } else {
-          console.error("Error creating resume:", errorDetail || "Failed to create resume");
+          return;
         }
       },
     });
@@ -142,12 +122,7 @@ export function CreateResumeDialog({ open, onOpenChange }) {
           </DialogContent>
         </Dialog>
 
-        <UpgradeDialog
-            open={upgradeDialogOpen}
-            onOpenChange={setUpgradeDialogOpen}
-            currentLimit={limitInfo.limit}
-            currentUsage={limitInfo.current}
-        />
+        <UpgradeDialogComponent />
       </>
   );
 }
