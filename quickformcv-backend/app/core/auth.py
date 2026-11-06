@@ -30,20 +30,6 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
 
-    # If the user is a dev, return a mock dev user that matches UserInDB structure
-    if user_id == "dev":
-        return UserInDB(
-            id=UUID('00000000-0000-0000-0000-000000000000'),  # dummy UUID for dev
-            email="dev@example.com",
-            hashed_password="",
-            first_name="Dev",
-            last_name="User",
-            is_active=True,
-            is_verified=True,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
-        )
-
     if payload.get("type") != "access":
         raise credentials_exception
 

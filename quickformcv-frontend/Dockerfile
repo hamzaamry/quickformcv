@@ -1,22 +1,20 @@
-FROM node:20-alpine AS base
-
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat && npm install -g pnpm@10
 WORKDIR /app
-RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# The final image uses the system Chromium, so skip Puppeteer's own download
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN pnpm install --frozen-lockfile
 
-FROM base AS builder
+FROM node:20-alpine AS builder
+RUN npm install -g pnpm@10
 WORKDIR /app
-RUN npm install -g pnpm
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=https://quickformcv.com/api-server/api/v0
-ARG NEXT_PUBLIC_APP_URL=https://quickformcv.com
-ARG NEXTAUTH_URL=https://quickformcv.com
-
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v0
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXTAUTH_URL=http://localhost:3000
 ENV DOCKER_BUILD=true \
     NODE_ENV=production \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
@@ -24,68 +22,24 @@ ENV DOCKER_BUILD=true \
     NEXTAUTH_URL=${NEXTAUTH_URL}
 RUN pnpm run build
 
-FROM node:20-slim AS runner
-
-RUN apt-get update && apt-get install -y \
-    chromium \
-    dumb-init \
-    ca-certificates \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
+FROM node:20-alpine AS runner
+# Chromium is used by Puppeteer for PDF export
+RUN apk add --no-cache dumb-init chromium nss freetype harfbuzz ca-certificates ttf-freefont
 WORKDIR /app
 
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs --home /app --shell /bin/bash nextjs
-
-RUN mkdir -p /app/.next /app/public /app/tmp /home/nextjs/.cache && \
-    chown -R nextjs:nodejs /app && \
-    chown -R nextjs:nodejs /home/nextjs && \
-    chmod 755 /app && \
-    chmod 755 /app/.next && \
-    chmod 755 /app/public && \
-    chmod 777 /app/tmp && \
-    chmod 755 /home/nextjs/.cache
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-RUN chown -R nextjs:nodejs /app && \
-    find /app -type d -exec chmod 755 {} \; && \
-    find /app -type f -exec chmod 644 {} \; && \
-    chmod +x /app/server.js
-
-# Environment variables
 ENV NODE_ENV=production \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
-    PUPPETEER_CACHE_DIR=/app/tmp \
-    XDG_CACHE_HOME=/home/nextjs/.cache \
-    XDG_DATA_HOME=/home/nextjs/.local/share \
-    HOME=/home/nextjs \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     PORT=3000 \
-    HOSTNAME="0.0.0.0" \
-    DOCKER_BUILD=true
-
-RUN mkdir -p /home/nextjs/.local/share && \
-    chown -R nextjs:nodejs /home/nextjs/.local
+    HOSTNAME=0.0.0.0
 
 USER nextjs
-
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

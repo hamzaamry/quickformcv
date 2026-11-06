@@ -133,23 +133,6 @@ async def logout(
     user_repo.revoke_refresh_token(current_user.id)
     return {"message": "Successfully logged out"}
 
-@router.post("/dev-token", include_in_schema=False)
-async def create_development_token(
-        request: Request,
-) -> dict:
-    """Create a development token with 30 days expiration (for testing purposes only)"""
-    if not any(addr in ["127.0.0.1", "localhost"] for addr in [request.client.host]):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This endpoint is only available in development environment"
-        )
-    dev_token = create_dev_token()
-    return {
-        "access_token": dev_token,
-        "token_type": "bearer",
-        "expires_in": 30 * 24 * 60 * 60  # 30 days in seconds
-    }
-
 @router.get("/google/login")
 async def google_login():
     return {

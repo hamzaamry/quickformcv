@@ -4,7 +4,6 @@ from fastapi.security import OAuth2PasswordBearer
 from ..core.auth import get_current_active_user
 
 PUBLIC_PATHS = [
-    "/api/v0/auth/dev-token",
     "/api/v0/auth/login",
     "/api/v0/auth/refresh",
     "/api/v0/users/signup",

@@ -60,24 +60,8 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
 
 def verify_token(token: str) -> Optional[dict]:
     try:
-        # Check if it's a devToken
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
-        if payload.get("sub") == "dev":
-            return payload
-
-        # Regular token verification
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError:
         return None
 
-
-def create_dev_token() -> str:
-    """Create a long-lived development token"""
-    data = {
-        "sub": "dev",
-        "exp": datetime.now(timezone.utc) + timedelta(days=30),
-        "type": "access",
-        "iat": datetime.now(timezone.utc),
-    }
-    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
