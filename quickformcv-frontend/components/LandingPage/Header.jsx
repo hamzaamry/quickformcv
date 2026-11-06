@@ -2,26 +2,49 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { QuickFormLogo } from "@/components/icons/QuickFormLogo";
 import { QuickFormLogoBlue } from "@/components/icons/QuickFormLogoBlue";
+import { useState, useEffect } from "react";
 import { trackCTAClick, trackNavigation } from "@/utils/analytics";
 
 export const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleCTAClick = () => {
     trackCTAClick('header', 'Start building free');
   };
 
-  const handleNavClick = (linkText, linkTarget) => {
-    trackNavigation(linkText, linkTarget);
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    trackNavigation(targetId, `#${targetId}`);
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
   };
 
   return (
-      <header className="relative z-50 bg-white">
+      <header
+          className={`fixed w-full z-50 transition-all duration-300 ${
+              isScrolled
+                  ? 'bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm'
+                  : 'bg-white'
+          }`}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-6">
-            <Link
-                href="/"
-                className="flex items-center cursor-pointer"
-                onClick={() => handleNavClick('Logo', '/')}
-            >
+            <Link href="/" className="flex items-center cursor-pointer">
               {/* Desktop Logo */}
               <QuickFormLogo className="hidden md:block h-10 w-auto" />
               {/* Mobile Logo */}
@@ -30,41 +53,47 @@ export const Header = () => {
 
             {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <Link
+              <a
                   href="#features"
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                  onClick={() => handleNavClick('Features', '#features')}
+                  onClick={(e) => handleSmoothScroll(e, 'features')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 Features
-              </Link>
-              <Link
+              </a>
+              <a
                   href="#testimonials"
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                  onClick={() => handleNavClick('Reviews', '#testimonials')}
+                  onClick={(e) => handleSmoothScroll(e, 'testimonials')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 Reviews
-              </Link>
-              <Link
+              </a>
+              <a
+                  href="#pricing"
+                  onClick={(e) => handleSmoothScroll(e, 'pricing')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
+              >
+                Pricing
+              </a>
+              <a
                   href="#blogs"
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                  onClick={() => handleNavClick('Blogs', '#blogs')}
+                  onClick={(e) => handleSmoothScroll(e, 'blogs')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 Blogs
-              </Link>
-              <Link
+              </a>
+              <a
                   href="#faq"
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                  onClick={() => handleNavClick('FAQ', '#faq')}
+                  onClick={(e) => handleSmoothScroll(e, 'faq')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
               >
                 FAQ
-              </Link>
+              </a>
             </nav>
 
             {/* CTA Buttons */}
             <div className="flex items-center">
               <Link href="/auth/signup">
-                <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-sm font-medium"
+                <Button className="bg-blue-600 hover:bg-blue-700 text-sm font-medium transition-colors"
                     onClick={handleCTAClick}
                 >
                   Start building free

@@ -10,6 +10,7 @@ export function Navbar() {
 
   const pagetitles = {
     "/resumes": "Resumes",
+    "/settings": "Settings & Billing",
   };
 
   const pageTitle = pagetitles[currentPath] || null;
@@ -26,7 +27,7 @@ export function Navbar() {
             )}
           </Link>
           <div className="flex items-center gap-4">
-            <UserProfile />
+            <UserProfile showUserInfo={true} />
           </div>
         </div>
       </header>

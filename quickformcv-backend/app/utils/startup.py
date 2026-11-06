@@ -9,34 +9,27 @@ from rich.text import Text
 
 def create_clara_logo(frame):
     """
-    Generate Clara's ASCII art logo with changing friendly expressions
+    Generate QuickForm CV's ASCII art logo with changing friendly expressions
 
     Args:
         frame (int): Current animation frame
 
     Returns:
-        str: Clara ASCII art
+        str: QuickForm CV ASCII art
     """
     expressions = ["(◠‿◠)", "(❀‿❀)", "(★‿★)", "(♥‿♥)"]
     expression = expressions[frame % len(expressions)]
 
     clara_art = f"""
-    ╔═══════════════════════════════════════════════════╗
-    ║   ██████╗  ██╗        █████╗   ██████╗    █████╗  ║
-    ║  ██╔════╝  ██║       ██╔══██╗  ██╔══██╗  ██╔══██  ║
-    ║  ██║       ██║       ███████║  ██████╔╝  ███████  ║
-    ║  ██║       ██║       ██╔══██║  ██╔══██╗  ██╔══██  ║
-    ║  ╚██████╗  ███████╗  ██║  ██║  ██║  ██║  ██║  ██  ║
-    ╚═══════════════════════════════════════════════════╝
-          ◄ ClaraHire: Your Career Growth Partner ►
-                  ⚡ ACTIVE   {expression}
+        ◄ QuickForm CV: Build Your Perfect Resume ►
+              ⚡ ACTIVE   {expression}   📄✨
     """
     return clara_art
 
 
 def display_startup_sequence(logger=None):
     """
-    Display an animated startup sequence for Clara
+    Display an animated startup sequence for QuickForm CV
 
     Args:
         logger (logging.Logger, optional): Logger to use for logging startup steps
@@ -45,7 +38,7 @@ def display_startup_sequence(logger=None):
     console.clear()
 
     if logger:
-        logger.info("Clara AI Assistant - System Initialization Started")
+        logger.info("QuickForm CV - Resume Builder System Initialization Started")
 
     frames = 6
     panel_width = console.width - 70
@@ -58,12 +51,12 @@ def display_startup_sequence(logger=None):
             banner_text.append("\n")
 
             loading_messages = [
-                "Initializing AI assistant...",
-                "Loading resume analysis modules...",
-                "Preparing job matching algorithms...",
-                "Calibrating interview preparation tools...",
-                "Setting up career guidance systems...",
-                "Clara is ready to help! 🚀",
+                "Initializing resume builder...",
+                "Loading CV templates and formatting...",
+                "Setting up job search algorithms...",
+                "Preparing resume optimization tools...",
+                "Connecting to job matching database...",
+                "QuickForm CV is ready to build! 🚀",
             ]
 
             banner_text.append(
@@ -75,8 +68,8 @@ def display_startup_sequence(logger=None):
                 Align.center(banner_text, width=panel_width),
                 border_style="blue",
                 padding=(1, 2),
-                title="✦ CLARA STARTUP ✦",
-                subtitle="AI-Powered Career Assistant",
+                title="✦ QUICKFORM CV STARTUP ✦",
+                subtitle="Professional Resume Builder",
                 title_align="center",
                 width=panel_width,
             )
@@ -87,14 +80,14 @@ def display_startup_sequence(logger=None):
     banner_text = Text()
     banner_text.append(create_clara_logo(frames - 1), style="bright_blue")
     banner_text.append("\n")
-    banner_text.append("Ready to enhance your career journey!", style="bright_green")
+    banner_text.append("Ready to create your perfect resume!", style="bright_green")
 
     final_panel = Panel(
         Align.center(banner_text, width=panel_width),
         border_style="blue",
         padding=(1, 2),
-        title="✦ Clara is Ready! ✦",
-        subtitle="AI-Powered Career Assistant",
+        title="✦ QuickForm CV is Ready! ✦",
+        subtitle="Professional Resume Builder + Job Search",
         title_align="center",
         width=panel_width,
     )
@@ -102,4 +95,4 @@ def display_startup_sequence(logger=None):
     console.print(final_panel)
 
     if logger:
-        logger.info("Clara AI Assistant - System Successfully Initialized")
+        logger.info("QuickForm CV - Resume Builder System Successfully Initialized")

@@ -6,3 +6,4 @@ export { Header } from "./Header";
 export { HeroSection } from "./HeroSection";
 export { Testimonials } from "./Testimonials";
 export { Blogs } from "./Blogs";
+export { Pricing } from "./Pricing";

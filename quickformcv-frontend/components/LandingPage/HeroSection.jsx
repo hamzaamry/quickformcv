@@ -3,34 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
-import { trackCTAClick, trackSocialProofClick } from "@/utils/analytics";
+import { trackCTAClick } from "@/utils/analytics";
 
 export const HeroSection = () => {
   const handleMainCTAClick = () => {
     trackCTAClick('hero', 'Start building free');
   };
 
-  const handleBetaBadgeClick = () => {
-    trackSocialProofClick('beta_badge', 'hero');
-  };
-
-  const handleFOMOClick = () => {
-    trackSocialProofClick('fomo_message', 'hero');
-  };
-
   return (
-      <div className="relative">
+      <div className="relative pt-20 sm:pt-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-16 text-center lg:pt-24">
-          {/* Beta Badge */}
-          <div className="mb-8">
-            <Badge
-                variant="secondary"
-                className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 cursor-pointer"
-                onClick={handleBetaBadgeClick}
-            >
-              🚀 Beta Version - Limited Time Free Access
-            </Badge>
-          </div>
 
           {/* Main Headline */}
           <h1 className="mx-auto max-w-4xl font-display text-4xl font-medium tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
@@ -71,13 +53,9 @@ export const HeroSection = () => {
 
           {/* FOMO Message */}
           <div className="mt-8">
-            <p
-                className="text-sm text-gray-600 cursor-pointer"
-                onClick={handleFOMOClick}
-            >
-              ⚡ <strong>Limited Beta Access:</strong> Join early users building
+            <p className="text-sm text-gray-600">
+              ⚡ Join users building
               resumes for free.
-              <span className="text-blue-600 font-medium"> Beta ends soon!</span>
             </p>
           </div>
         </div>

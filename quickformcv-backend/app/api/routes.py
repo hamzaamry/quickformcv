@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from ..middleware.authMiddleware import AuthMiddleware
-from .endpoints.userEndpoints import routers as user_routers
+from .endpoints import routers as user_routers
 from ..middleware.authMiddleware import PUBLIC_PATHS
 from ..core.auth import get_current_active_user
 

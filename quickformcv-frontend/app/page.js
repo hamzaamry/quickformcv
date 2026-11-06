@@ -9,6 +9,7 @@ import {
   Header,
   HeroSection,
   Testimonials,
+  Pricing,
 } from "@/components/LandingPage";
 import { useScrollTracking } from "@/hooks/useScrollTracking";
 
@@ -22,6 +23,7 @@ export default function QuickFormCVLanding() {
           <HeroSection />
           <Features />
           <Testimonials />
+          <Pricing />
           <Blogs />
           <FAQ />
           <FinalCTA />

@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from ..core.auth import get_current_active_user
 

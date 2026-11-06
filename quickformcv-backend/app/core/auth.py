@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
 from ..Database import get_db
-from ..repositories.userRepositories.userRepository import UserRepository
-from ..schemas.userSchemas.userSchema import UserInDB
+from app.repositories.userRepository import UserRepository
+from app.schemas.userSchema import UserInDB
 from .security import verify_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v0/auth/login")

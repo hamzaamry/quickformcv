@@ -1,3 +1,3 @@
 from .base import Base
-from .userModels.userModel import User, RefreshToken, UserLoginHistory
-from .userModels.resumeModel import Resume, ResumeSection, ResumeMetadata
+from app.models.userModel import User, RefreshToken, UserLoginHistory
+from app.models.resumeModel import Resume, ResumeSection, ResumeMetadata
