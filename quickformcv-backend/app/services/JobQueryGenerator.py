@@ -1,4 +1,5 @@
 import json
+import os
 import http.client
 from typing import List, Dict, Optional
 from app.services.GroqService import GroqService
@@ -6,7 +7,7 @@ from app.services.GroqService import GroqService
 class JobQueryGenerator:
     def __init__(self, groq_service: GroqService):
         self.groq_service = groq_service
-        self.rapidapi_key = "90a404199amsh18e88469e568409p1bbdf3jsn485e7e79ffbc"
+        self.rapidapi_key = os.getenv("RAPIDAPI_KEY")
 
     def generate_job_queries(self, resume_data: Dict) -> List[str]:
         """
